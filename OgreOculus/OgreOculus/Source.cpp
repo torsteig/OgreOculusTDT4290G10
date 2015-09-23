@@ -15,7 +15,7 @@
 #include <RenderSystems/GL/OgreGLTexture.h>
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_GL.h>
-#include <OVR_CAPI_0_7_0.h>
+#include <OVR_CAPI_0_7_0.h>rr
 
 enum eyes{left, right, nbEyes};
 
@@ -229,6 +229,14 @@ mainFunc()
 	OIS::ParamList pl;
     size_t windowHnd = 0;
     std::ostringstream windowHndStr;
+
+	//tell OIS about the Ogre window
+    window->getCustomAttribute("WINDOW", &windowHnd);
+    windowHndStr << windowHnd;
+    pl.insert(std::make_pair(std::string("WINDOW"), windowHndStr.str()));
+
+    OIS::InputManager* inputManager = OIS::InputManager::createInputSystem(pl);
+    OIS::Keyboard* mKeyboard = static_cast<OIS::Keyboard*>(inputManager->createInputObject(OIS::OISKeyboard, true));
  
     
 
@@ -258,6 +266,14 @@ mainFunc()
 				
 		mHeadNode->setOrientation(cameraOrientation * Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z));
 		
+		 mKeyboard->capture();
+        float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
+        float leftRight = (mKeyboard->isKeyDown( OIS::KC_A ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_D ) ? 0 : -1);
+        Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X;
+        Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
+
+        mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward + dirX*leftRight );
+
 		root->_fireFrameRenderingQueued();
 		vpts[left]->update();
 		vpts[right]->update();
