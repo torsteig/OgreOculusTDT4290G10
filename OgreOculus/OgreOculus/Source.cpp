@@ -269,10 +269,13 @@ mainFunc()
 		 mKeyboard->capture();
         float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
         float leftRight = (mKeyboard->isKeyDown( OIS::KC_A ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_D ) ? 0 : -1);
+		float rotation = (mKeyboard->isKeyDown( OIS::KC_E ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_Q ) ? 0 : -1);
         Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X;
         Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
+		
 
-        mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward + dirX*leftRight );
+        mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight );		
+			mBodyNode->yaw(Ogre::Degree(0.8f)*rotation);
 
 		root->_fireFrameRenderingQueued();
 		vpts[left]->update();
