@@ -272,8 +272,26 @@ mainFunc()
 			oculusOrient.w*oculusOrient.w - oculusOrient.x*oculusOrient.x - 
 			oculusOrient.y*oculusOrient.y + oculusOrient.z*oculusOrient.z);
 
-		Ogre::LogManager::getSingleton().logMessage("The pitch is: " + Ogre::StringConverter::toString(pitch));
-		Ogre::LogManager::getSingleton().logMessage("The current position is: " + Ogre::StringConverter::toString(mBodyTiltNode->_getDerivedOrientation()));
+		float yaw = asin(-2*(oculusOrient.x*oculusOrient.z - oculusOrient.w*oculusOrient.y));
+
+		float roll = atan2(2*(oculusOrient.x*oculusOrient.y + oculusOrient.w*oculusOrient.z),
+			oculusOrient.w*oculusOrient.w + oculusOrient.x*oculusOrient.x 
+			- oculusOrient.y*oculusOrient.y - oculusOrient.z*oculusOrient.z);
+
+		Ogre::LogManager::getSingleton().logMessage("The oculusOrientation(w,x,y,z) is: " 
+			+ Ogre::StringConverter::toString(oculusOrient.w)
+			+ Ogre::StringConverter::toString(oculusOrient.x)
+			+ Ogre::StringConverter::toString(oculusOrient.y)
+			+ Ogre::StringConverter::toString(oculusOrient.z)
+			);
+
+		Ogre::LogManager::getSingleton().logMessage("The pitch, yaw, roll is: " 
+			+ Ogre::StringConverter::toString(pitch)
+			+ Ogre::StringConverter::toString(yaw)
+			+ Ogre::StringConverter::toString(roll)
+			);
+
+		Ogre::LogManager::getSingleton().logMessage("The current position is: " + Ogre::StringConverter::toString(mBodyTiltNode->getPosition));
 
 		mKeyboard->capture();
         float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
@@ -281,8 +299,10 @@ mainFunc()
 		float rotation = (mKeyboard->isKeyDown( OIS::KC_E ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_Q ) ? 0 : -1);
 
         Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X*cos(pitch);
-        Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
+        Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z*cos(yaw);
 		Ogre::Vector3 dirY = (mKeyboard->isKeyDown( OIS::KC_W )
+			? mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Y*sin(pitch) 
+			: Ogre::Vector3::ZERO) + (mKeyboard->isKeyDown( OIS::KC_S )
 			? mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Y*sin(pitch) 
 			: Ogre::Vector3::ZERO);
 
