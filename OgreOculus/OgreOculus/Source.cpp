@@ -273,6 +273,7 @@ mainFunc()
 			oculusOrient.y*oculusOrient.y + oculusOrient.z*oculusOrient.z);
 
 		Ogre::LogManager::getSingleton().logMessage("The pitch is: " + Ogre::StringConverter::toString(pitch));
+		Ogre::LogManager::getSingleton().logMessage("The current position is: " + Ogre::StringConverter::toString(mBodyTiltNode->_getDerivedOrientation()));
 
 		mKeyboard->capture();
         float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
@@ -281,7 +282,14 @@ mainFunc()
 
         Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X*cos(pitch);
         Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
-		Ogre::Vector3 dirY = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Y*sin(pitch);
+		Ogre::Vector3 dirY = (mKeyboard->isKeyDown( OIS::KC_W )
+			? mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Y*sin(pitch) 
+			: Ogre::Vector3::ZERO);
+
+		Ogre::LogManager::getSingleton().logMessage("The current directions are (X, Z, Y): " 
+			+ Ogre::StringConverter::toString(dirX)
+			+ Ogre::StringConverter::toString(dirZ)
+			+ Ogre::StringConverter::toString(dirY));
 
         mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight + dirY);		
 			mBodyNode->yaw(Ogre::Degree(0.8f)*rotation);
