@@ -263,18 +263,27 @@ mainFunc()
 		ovr_CalcEyePoses(pose, offset, layer.RenderPose);
 		oculusOrient = pose.Rotation;
 		oculusPos = pose.Translation;
+
+
 				
 		mHeadNode->setOrientation(cameraOrientation * Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z));
 		
-		 mKeyboard->capture();
+		float pitch = atan2f(2*(oculusOrient.y * oculusOrient.z + oculusOrient.w * oculusOrient.x),
+			oculusOrient.w*oculusOrient.w - oculusOrient.x*oculusOrient.x - 
+			oculusOrient.y*oculusOrient.y + oculusOrient.z*oculusOrient.z);
+
+		Ogre::LogManager::getSingleton().logMessage("The pitch is: " + Ogre::StringConverter::toString(pitch));
+
+		mKeyboard->capture();
         float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
         float leftRight = (mKeyboard->isKeyDown( OIS::KC_A ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_D ) ? 0 : -1);
 		float rotation = (mKeyboard->isKeyDown( OIS::KC_E ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_Q ) ? 0 : -1);
-        Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X;
-        Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
-		
 
-        mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight );		
+        Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X*cos(pitch);
+        Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
+		Ogre::Vector3 dirY = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Y*sin(pitch);
+
+        mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight + dirY);		
 			mBodyNode->yaw(Ogre::Degree(0.8f)*rotation);
 
 		root->_fireFrameRenderingQueued();
