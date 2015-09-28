@@ -279,11 +279,16 @@ mainFunc()
 			- oculusOrient.y*oculusOrient.y - oculusOrient.z*oculusOrient.z);
 
 		Ogre::LogManager::getSingleton().logMessage("The oculusOrientation(w,x,y,z) is: " 
-			+ Ogre::StringConverter::toString(oculusOrient.w)
-			+ Ogre::StringConverter::toString(oculusOrient.x)
-			+ Ogre::StringConverter::toString(oculusOrient.y)
+			+ Ogre::StringConverter::toString(oculusOrient.w) + " " 
+			+ Ogre::StringConverter::toString(oculusOrient.x) + " " 
+			+ Ogre::StringConverter::toString(oculusOrient.y) + " " 
 			+ Ogre::StringConverter::toString(oculusOrient.z)
 			);
+
+		/*
+		Deprecated: Works as intented (pitch up is positive, down is negative. 
+		Yaw is negative to the left, positive to the right.
+		Roll is positive to the right, negative to the left.
 
 		Ogre::LogManager::getSingleton().logMessage("The pitch, yaw, roll is: " 
 			+ Ogre::StringConverter::toString(pitch)
@@ -291,7 +296,9 @@ mainFunc()
 			+ Ogre::StringConverter::toString(roll)
 			);
 
-		Ogre::LogManager::getSingleton().logMessage("The current position is: " + Ogre::StringConverter::toString(mBodyTiltNode->getPosition));
+		*/
+
+		Ogre::LogManager::getSingleton().logMessage("The current position is: " + Ogre::StringConverter::toString(mBodyTiltNode->getPosition()));
 
 		mKeyboard->capture();
         float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
@@ -303,12 +310,12 @@ mainFunc()
 		Ogre::Vector3 dirY = (mKeyboard->isKeyDown( OIS::KC_W )
 			? mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Y*sin(pitch) 
 			: Ogre::Vector3::ZERO) + (mKeyboard->isKeyDown( OIS::KC_S )
-			? mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Y*sin(pitch) 
+			? -(mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Y*sin(pitch)) 
 			: Ogre::Vector3::ZERO);
 
 		Ogre::LogManager::getSingleton().logMessage("The current directions are (X, Z, Y): " 
-			+ Ogre::StringConverter::toString(dirX)
-			+ Ogre::StringConverter::toString(dirZ)
+			+ Ogre::StringConverter::toString(dirX) + " " 
+			+ Ogre::StringConverter::toString(dirZ) + " " 
 			+ Ogre::StringConverter::toString(dirY));
 
         mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight + dirY);		
