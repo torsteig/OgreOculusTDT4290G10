@@ -15,7 +15,9 @@
 #include <RenderSystems/GL/OgreGLTexture.h>
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_GL.h>
-#include <OVR_CAPI_0_7_0.h>rr
+#include <OVR_CAPI_0_7_0.h>
+
+const float  PI = 3.14159265358979f;
 
 enum eyes{left, right, nbEyes};
 
@@ -23,6 +25,7 @@ int max(int a, int b)
 {
 	if (a > b) return a; return b;
 }
+
 
 mainFunc()
 {
@@ -270,13 +273,13 @@ mainFunc()
 		
 		float pitch = atan2f(2*(oculusOrient.y * oculusOrient.z + oculusOrient.w * oculusOrient.x),
 			oculusOrient.w*oculusOrient.w - oculusOrient.x*oculusOrient.x - 
-			oculusOrient.y*oculusOrient.y + oculusOrient.z*oculusOrient.z);
+			oculusOrient.y*oculusOrient.y + oculusOrient.z*oculusOrient.z) *(180/PI);
 
-		float yaw = asin(-2*(oculusOrient.x*oculusOrient.z - oculusOrient.w*oculusOrient.y));
+		float yaw = asin(-2*(oculusOrient.x*oculusOrient.z - oculusOrient.w*oculusOrient.y)) *(180/PI);
 
-		float roll = atan2(2*(oculusOrient.x*oculusOrient.y + oculusOrient.w*oculusOrient.z),
+		float roll = atan2f(2*(oculusOrient.x*oculusOrient.y + oculusOrient.w*oculusOrient.z),
 			oculusOrient.w*oculusOrient.w + oculusOrient.x*oculusOrient.x 
-			- oculusOrient.y*oculusOrient.y - oculusOrient.z*oculusOrient.z);
+			- oculusOrient.y*oculusOrient.y - oculusOrient.z*oculusOrient.z) *(180/PI);
 
 		Ogre::LogManager::getSingleton().logMessage("The oculusOrientation(w,x,y,z) is: " 
 			+ Ogre::StringConverter::toString(oculusOrient.w) + " " 
