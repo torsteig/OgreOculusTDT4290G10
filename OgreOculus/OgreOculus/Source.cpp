@@ -15,7 +15,11 @@
 #include <RenderSystems/GL/OgreGLTexture.h>
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_GL.h>
-#include <OVR_CAPI_0_7_0.h>rr
+#include <OVR_CAPI_0_7_0.h>
+
+//Physics
+#include <thread>
+#include "PhysicsLoop.h"
 
 enum eyes{left, right, nbEyes};
 
@@ -121,6 +125,18 @@ mainFunc()
 	Ogre::SceneNode* ogreNode = smgr->getRootSceneNode()->createChildSceneNode();
 	ogreNode->attachObject(ogreEntity);
 
+	Ogre::Entity* ogreEntity2 = smgr->createEntity("fish.mesh");
+	Ogre::SceneNode* ogreNode2 = smgr->getRootSceneNode()->createChildSceneNode();
+	ogreNode2->setPosition(Ogre::Vector3(0, 0, 50));
+	ogreNode2->attachObject(ogreEntity2);
+
+	Ogre::AnimationState* mAnimationState = ogreEntity2->getAnimationState("swim");
+	mAnimationState->setLoop(true);
+	mAnimationState->setEnabled(true);
+	Ogre::Degree angle = Ogre::Degree(180); 
+	ogreNode2->roll(angle);
+	ogreNode2->pitch(angle);
+
 	/*---------------------------------------------*/
 	/* OGRE MODEL CREATION ENDS HERE                */
 	/*---------------------------------------------*/
@@ -133,7 +149,7 @@ mainFunc()
 
 	// Viewport and scene (is this even used?)
 	Ogre::Viewport* vp = window->addViewport(mCamera);
-	vp->setBackgroundColour(Ogre::ColourValue(34, 89, 0)); //yellow
+	vp->setBackgroundColour(Ogre::ColourValue(0.5, 0.7, 1)); //blue
 
 	// Some other camera stuff. Not sure if needed
 	mCamera->setAspectRatio(
@@ -249,6 +265,9 @@ mainFunc()
 	OVR::Vector3f oculusPos;
 	ovrLayerHeader* layers;
 	
+
+	//Run physics loop in a new thread
+	std::thread thread(physicsLoop, smgr);
 
 	// Render loop
 	while(render)
