@@ -171,8 +171,8 @@ mainFunc()
 	Ogre::Viewport* vpts[nbEyes];
 	vpts[left]=rttEyes->addViewport(cams[left], 0, 0, 0, 0.5f);
 	vpts[right]=rttEyes->addViewport(cams[right], 1, 0.5f, 0, 0.5f);
-	vpts[left]->setBackgroundColour(Ogre::ColourValue(0, 0, 0)); // Black background 
-	vpts[right]->setBackgroundColour(Ogre::ColourValue(0, 0, 0));
+	vpts[left]->setBackgroundColour(Ogre::ColourValue(34, 89, 0)); // Black background 
+	vpts[right]->setBackgroundColour(Ogre::ColourValue(34, 89, 0));
 	
 	ovrTexture* mirrorTexture;
 	if(ovr_CreateMirrorTextureGL(hmd, GL_RGB, hmdDesc.Resolution.w, hmdDesc.Resolution.h, &mirrorTexture) != ovrSuccess)
@@ -226,19 +226,44 @@ mainFunc()
 
 		// Variables for render loop
 	bool render(true);
+	/*
+	Ogre::LogManager::getSingleton().logMessage("foer");
 	OIS::ParamList pl;
+
+	//OIS::InputManager* inputManager;
     size_t windowHnd = 0;
     std::ostringstream windowHndStr;
 
 	//tell OIS about the Ogre window
+	try
+	{
     window->getCustomAttribute("WINDOW", &windowHnd);
     windowHndStr << windowHnd;
     pl.insert(std::make_pair(std::string("WINDOW"), windowHndStr.str()));
+	Ogre::LogManager::getSingleton().logMessage("mellom");
+
 
     OIS::InputManager* inputManager = OIS::InputManager::createInputSystem(pl);
-    OIS::Keyboard* mKeyboard = static_cast<OIS::Keyboard*>(inputManager->createInputObject(OIS::OISKeyboard, true));
+	}
+	catch (...)
+	{
+		Ogre::LogManager::getSingleton().logMessage("e.eText");
+		//std::cout << e.eText << std::endl;
+		//Ogre::LogManager::getSingleton().logMessage(e.eText);
+	}
+	Ogre::LogManager::getSingleton().logMessage("etter");
+	*/
+
+	size_t hWnd = 0;
+
+	window->getCustomAttribute("WINDOW", &hWnd);
+	OIS::InputManager* inputManager = OIS::InputManager::createInputSystem(hWnd);
+
+	OIS::Keyboard* mKeyboard = static_cast<OIS::Keyboard*>(inputManager->createInputObject(OIS::OISKeyboard, true));
+
  
-    
+    //Ogre::LogManager::getSingleton().logMessage();
+
 
 	ovrFrameTiming hmdFrameTiming;
 	Ogre::Vector3 cameraPosition;
@@ -256,6 +281,7 @@ mainFunc()
 		Ogre::WindowEventUtilities::messagePump();
 		//advance textureset index
 		textureSet->CurrentIndex = (textureSet->CurrentIndex + 1) % textureSet->TextureCount;
+		//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(textureSet->CurrentIndex));
 
 		hmdFrameTiming = ovr_GetFrameTiming(hmd, 0);
 		ts = ovr_GetTrackingState(hmd, hmdFrameTiming.DisplayMidpointSeconds);
@@ -263,19 +289,30 @@ mainFunc()
 		ovr_CalcEyePoses(pose, offset, layer.RenderPose);
 		oculusOrient = pose.Rotation;
 		oculusPos = pose.Translation;
-				
+		//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z)));
 		mHeadNode->setOrientation(cameraOrientation * Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z));
 		
-		 mKeyboard->capture();
-        float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
-        float leftRight = (mKeyboard->isKeyDown( OIS::KC_A ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_D ) ? 0 : -1);
-		float rotation = (mKeyboard->isKeyDown( OIS::KC_E ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_Q ) ? 0 : -1);
-        Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X;
-        Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
+		mKeyboard->capture();
+		if (mKeyboard->isKeyDown(OIS::KC_W))
+		{
+			Ogre::LogManager::getSingleton().logMessage("w pressed");
+			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1)));
+			mBodyNode->setOrientation(mHeadNode->getOrientation());
+			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1)));
+			Ogre::Vector3 direction = mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1);
+			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
+			mBodyNode->setPosition( mBodyNode->getPosition() + direction );
+			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
+		}
+        //float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
+        //float leftRight = (mKeyboard->isKeyDown( OIS::KC_A ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_D ) ? 0 : -1);
+		//float rotation = (mKeyboard->isKeyDown( OIS::KC_E ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_Q ) ? 0 : -1);
+        //Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X;
+        //Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
 		
 
-        mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight );		
-			mBodyNode->yaw(Ogre::Degree(0.8f)*rotation);
+        //mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight );		
+		//	mBodyNode->yaw(Ogre::Degree(0.8f)*rotation);
 
 		root->_fireFrameRenderingQueued();
 		vpts[left]->update();
