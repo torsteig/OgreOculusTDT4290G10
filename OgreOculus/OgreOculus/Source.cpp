@@ -15,7 +15,8 @@
 #include <RenderSystems/GL/OgreGLTexture.h>
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_GL.h>
-#include <OVR_CAPI_0_7_0.h>rr
+#include <OVR_CAPI_0_7_0.h>
+#include "InputManager.h"
 
 enum eyes{left, right, nbEyes};
 
@@ -64,8 +65,9 @@ mainFunc()
 
 	//setup body and head cam
 	Ogre::SceneNode* mBodyNode = smgr->getRootSceneNode()->createChildSceneNode("BodyNode");
-	Ogre::SceneNode*  mBodyTiltNode = mBodyNode->createChildSceneNode();
-	Ogre::SceneNode*  mHeadNode = mBodyTiltNode->createChildSceneNode("HeadNode"); 
+	//Ogre::SceneNode*  mBodyTiltNode = mBodyNode->createChildSceneNode();
+	//Ogre::SceneNode*  mHeadNode = mBodyTiltNode->createChildSceneNode("HeadNode");
+	Ogre::SceneNode* mHeadNode = mBodyNode->createChildSceneNode("HeadNode");
 	mBodyNode->setFixedYawAxis( true );	// don't roll! 
 
 	mHeadNode->attachObject(cams[left]);
@@ -127,9 +129,17 @@ mainFunc()
 
 	// Camera part here
 	Ogre::Camera* mCamera = smgr->createCamera("PlayerCam");
-	mCamera->setPosition(Ogre::Vector3(0, 50, 100));
-	mCamera->lookAt(Ogre::Vector3(0, 0, 0));
+	//mCamera->setPosition(Ogre::Vector3(0, 50, 100));
+	//mCamera->lookAt(Ogre::Vector3(0, 0, 0));
 	mCamera->setNearClipDistance(5);
+
+
+	Ogre::SceneNode* mPlayerNode = smgr->getRootSceneNode()->createChildSceneNode("PlayerNode");
+	mPlayerNode->attachObject(mCamera);
+	mPlayerNode->setPosition(0, 50.0, 100.0); //view is different from window camera
+	mPlayerNode->lookAt(Ogre::Vector3::ZERO, Ogre::SceneNode::TS_WORLD);
+	Ogre::Vector3 playerDirection = Ogre::Vector3(0,0,-1);
+
 
 	// Viewport and scene (is this even used?)
 	Ogre::Viewport* vp = window->addViewport(mCamera);
@@ -257,9 +267,11 @@ mainFunc()
 	size_t hWnd = 0;
 
 	window->getCustomAttribute("WINDOW", &hWnd);
-	OIS::InputManager* inputManager = OIS::InputManager::createInputSystem(hWnd);
-
-	OIS::Keyboard* mKeyboard = static_cast<OIS::Keyboard*>(inputManager->createInputObject(OIS::OISKeyboard, true));
+	OIS::InputManager* oisInputManager = OIS::InputManager::createInputSystem(hWnd);
+	//InputManager* inputManager = InputManager::initialise(window); //(Ogre::RenderWindow *renderWindow
+	InputManager* mInputMgr = InputManager::getSingletonPtr();
+	mInputMgr->initialise(window);
+	OIS::Keyboard* mKeyboard = static_cast<OIS::Keyboard*>(oisInputManager->createInputObject(OIS::OISKeyboard, true));
 
  
     //Ogre::LogManager::getSingleton().logMessage();
@@ -295,14 +307,37 @@ mainFunc()
 		mKeyboard->capture();
 		if (mKeyboard->isKeyDown(OIS::KC_W))
 		{
-			Ogre::LogManager::getSingleton().logMessage("w pressed");
-			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1)));
-			mBodyNode->setOrientation(mHeadNode->getOrientation());
-			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1)));
-			Ogre::Vector3 direction = mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1);
-			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
-			mBodyNode->setPosition( mBodyNode->getPosition() + direction );
-			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
+			//Ogre::LogManager::getSingleton().logMessage("w pressed");
+			mPlayerNode->translate(playerDirection);
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation()));
+			//mBodyNode->setOrientation(mHeadNode->getOrientation());
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1)));
+			//Ogre::Vector3 direction = mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1);
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
+			//mBodyNode->setPosition( mBodyNode->getPosition() + direction );
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
+			//Ogre::LogManager::getSingleton().logMessage("error?");
+		}
+		if (mKeyboard->isKeyDown(OIS::KC_S)) 
+		{
+			mPlayerNode->translate(-playerDirection);
+		}
+		if (mKeyboard->isKeyDown(OIS::KC_A))
+		{
+			Ogre::Vector3 temp = Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y) * playerDirection;// v2 = Quaternion(Degree(-90), Vector3::UNIT_Y) * v1
+			// set y = 0 and normalize?
+			mPlayerNode->translate(temp);
+		}
+		if (mKeyboard->isKeyDown(OIS::KC_D))
+		{
+			Ogre::Vector3 temp = Ogre::Quaternion(Ogre::Degree(-90), Ogre::Vector3::UNIT_Y) * playerDirection;// v2 = Quaternion(Degree(-90), Vector3::UNIT_Y) * v1
+			// set y = 0 and normalize?
+			mPlayerNode->translate(temp);
+		}
+		if (mKeyboard->isKeyDown(OIS::KC_ESCAPE))
+		{
+			render = false;
+			//break;
 		}
         //float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
         //float leftRight = (mKeyboard->isKeyDown( OIS::KC_A ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_D ) ? 0 : -1);
