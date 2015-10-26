@@ -16,7 +16,7 @@
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_GL.h>
 #include <OVR_CAPI_0_7_0.h>
-#include "InputManager.h"
+//#include "InputManager.h"
 
 enum eyes{left, right, nbEyes};
 
@@ -74,14 +74,15 @@ mainFunc()
 	mHeadNode->attachObject(cams[right]);
 
 	//set cam position
-	float dist = 0.05;
+	//float dist = 0.05;
+	Ogre::Real dist = Ogre::Real(0.05);
 	cams[right]->setPosition(Ogre::Vector3(dist/2.0f, 0.0f, 0.0f));
 
-	cams[right]->setNearClipDistance(0.001);
+	cams[right]->setNearClipDistance(Ogre::Real(0.001));
 
 	cams[left]->setPosition(Ogre::Vector3(-dist/2.0f, 0.0f,0.0f));
 
-	cams[left]->setNearClipDistance(0.001);
+	cams[left]->setNearClipDistance(Ogre::Real(0.001));
 
 	mBodyNode->setPosition( 30.0,50.0, 100.0 ); //view is different from window camera
 	mBodyNode->lookAt(Ogre::Vector3::ZERO, Ogre::SceneNode::TS_WORLD);
@@ -131,14 +132,22 @@ mainFunc()
 	Ogre::Camera* mCamera = smgr->createCamera("PlayerCam");
 	//mCamera->setPosition(Ogre::Vector3(0, 50, 100));
 	//mCamera->lookAt(Ogre::Vector3(0, 0, 0));
-	mCamera->setNearClipDistance(5);
+	mCamera->setNearClipDistance(Ogre::Real(0.001));
 
-
+	Ogre::Vector3 initialCameraPosition = Ogre::Vector3(0.0, 50.0, 100.0);
+	Ogre::Vector3 initialCameraLookAt = Ogre::Vector3::ZERO;
+	Ogre::Real movementSpeed = Ogre::Real(1);
+	Ogre::Real mRotate = Ogre::Real(0.13);
 	Ogre::SceneNode* mPlayerNode = smgr->getRootSceneNode()->createChildSceneNode("PlayerNode");
 	mPlayerNode->attachObject(mCamera);
-	mPlayerNode->setPosition(0, 50.0, 100.0); //view is different from window camera
-	mPlayerNode->lookAt(Ogre::Vector3::ZERO, Ogre::SceneNode::TS_WORLD);
-	Ogre::Vector3 playerDirection = Ogre::Vector3(0,0,-1);
+	//mPlayerNode->setPosition(0, 50.0, 100.0); //view is different from window camera
+	mPlayerNode->setPosition(initialCameraPosition);
+	//mPlayerNode->lookAt(Ogre::Vector3::ZERO, Ogre::SceneNode::TS_WORLD);
+	mPlayerNode->lookAt(initialCameraLookAt, Ogre::SceneNode::TS_WORLD);
+	//Ogre::Vector3 playerDirection = Ogre::Vector3(0,0,-1);
+	Ogre::Vector3 playerDirection = initialCameraLookAt - initialCameraPosition;
+	playerDirection.normalise();
+	//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(playerDirection));
 
 
 	// Viewport and scene (is this even used?)
@@ -263,12 +272,30 @@ mainFunc()
 	size_t hWnd = 0;
 
 	window->getCustomAttribute("WINDOW", &hWnd);
-	OIS::InputManager* oisInputManager = OIS::InputManager::createInputSystem(hWnd);
+	OIS::InputManager* mInputManager = OIS::InputManager::createInputSystem(hWnd);
 	//InputManager* inputManager = InputManager::initialise(window); //(Ogre::RenderWindow *renderWindow
-	InputManager* mInputMgr = InputManager::getSingletonPtr();
+	//InputManager* mInputMgr = InputManager::getSingletonPtr();
 	//mInputMgr->initialise(window);
-	OIS::Keyboard* mKeyboard = static_cast<OIS::Keyboard*>(oisInputManager->createInputObject(OIS::OISKeyboard, true));
+	//OIS::Keyboard* mKeyboard = static_cast<OIS::Keyboard*>(oisInputManager->createInputObject(OIS::OISKeyboard, true));
+	OIS::Keyboard* mKeyboard = static_cast<OIS::Keyboard*>(mInputManager->createInputObject(OIS::OISKeyboard, false));
+	OIS::Mouse* mMouse = static_cast<OIS::Mouse*>(mInputManager->createInputObject(OIS::OISMouse, false));
 
+	//set window extent (should change when window resizes)
+	const OIS::MouseState &mouseState = mMouse->getMouseState();
+	//OIS::MouseState &mouseState = const_cast<OIS::MouseState &>(mMouse->getMouseState());
+	//OIS::MouseState &mutableMouseState = const_cast<OIS::MouseState &>(mMouse->getMouseState());
+	mouseState.width = window->getWidth(); //??
+	mouseState.height = window->getHeight();
+	//mouseState.width = Ogre::Root::getSingleton().getAutoCreatedWindow()->getWidth(); //??
+	//mouseState.height =  Ogre::Root::getSingleton().getAutoCreatedWindow()->getHeight();
+	//mutableMouseState.width = window->getWidth();
+	//mutableMouseState.height = window->getHeight();
+	//mouseState.X.abs = (int)(window->getWidth()/2.0);
+	//mouseState.Y.abs = (int)(window->getHeight()/2.0);
+	//mutableMouseState.X.abs = window->getWidth()/2.0;
+	//mutableMouseState.Y.abs = window->getHeight()/2.0;
+	//mouseState.X.rel = (int)(window->getWidth()/2.0);
+	//mouseState.Y.rel = (int)(window->getHeight()/2.0);
 
     //Ogre::LogManager::getSingleton().logMessage();
 
@@ -282,6 +309,14 @@ mainFunc()
 	OVR::Vector3f oculusPos;
 	ovrLayerHeader* layers;
 
+	int mouseXstate = mouseState.X.rel;
+	int mouseYstate = mouseState.Y.rel;
+	//Ogre::Vector3 internalXAxis = Ogre::Vector3(1,0,0);
+	Ogre::Vector3 internalXAxis = Ogre::Quaternion(Ogre::Degree(-90), Ogre::Vector3::UNIT_Y) * playerDirection;
+	internalXAxis.y = 0;
+	internalXAxis.normalise();
+	//int mouseXstate = mMouse->getMouseState().X.rel;
+	//int mouseYstate = mMouse->getMouseState().Y.rel;
 
 	// Render loop
 	while(render)
@@ -301,10 +336,20 @@ mainFunc()
 		mHeadNode->setOrientation(cameraOrientation * Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z));
 
 		mKeyboard->capture();
-		if (mKeyboard->isKeyDown(OIS::KC_W))
+		mMouse->capture();
+
+		//mMouse->getMouseState();
+
+		if (mKeyboard->isKeyDown(OIS::KC_W) || mKeyboard->isKeyDown(OIS::KC_UP))
 		{
 			//Ogre::LogManager::getSingleton().logMessage("w pressed");
-			mPlayerNode->translate(playerDirection);
+			mPlayerNode->translate(playerDirection*movementSpeed);
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mouseState.X.rel));
+			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mMouse->getMouseState().X.rel));
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mouseState.X.abs));
+			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mMouse->getMouseState().X.abs));
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mouseState.X.rel - mouseXstate));
+			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mMouse->getMouseState().X.rel - mouseXstate));
 			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation()));
 			//mBodyNode->setOrientation(mHeadNode->getOrientation());
 			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1)));
@@ -314,21 +359,25 @@ mainFunc()
 			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
 			//Ogre::LogManager::getSingleton().logMessage("error?");
 		}
-		if (mKeyboard->isKeyDown(OIS::KC_S))
+		if (mKeyboard->isKeyDown(OIS::KC_S) || mKeyboard->isKeyDown(OIS::KC_DOWN))
 		{
-			mPlayerNode->translate(-playerDirection);
+			mPlayerNode->translate(-playerDirection*movementSpeed);
 		}
-		if (mKeyboard->isKeyDown(OIS::KC_A))
+		if (mKeyboard->isKeyDown(OIS::KC_A) || mKeyboard->isKeyDown(OIS::KC_LEFT))
 		{
 			Ogre::Vector3 temp = Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y) * playerDirection;// v2 = Quaternion(Degree(-90), Vector3::UNIT_Y) * v1
 			// set y = 0 and normalize?
-			mPlayerNode->translate(temp);
+			temp.y = 0;
+			temp.normalise();
+			mPlayerNode->translate(temp*movementSpeed);
 		}
-		if (mKeyboard->isKeyDown(OIS::KC_D))
+		if (mKeyboard->isKeyDown(OIS::KC_D) || mKeyboard->isKeyDown(OIS::KC_RIGHT))
 		{
 			Ogre::Vector3 temp = Ogre::Quaternion(Ogre::Degree(-90), Ogre::Vector3::UNIT_Y) * playerDirection;// v2 = Quaternion(Degree(-90), Vector3::UNIT_Y) * v1
 			// set y = 0 and normalize?
-			mPlayerNode->translate(temp);
+			temp.y = 0;
+			temp.normalise();
+			mPlayerNode->translate(temp*movementSpeed);
 		}
 		if (mKeyboard->isKeyDown(OIS::KC_ESCAPE))
 		{
@@ -344,6 +393,29 @@ mainFunc()
 
         //mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight );
 		//	mBodyNode->yaw(Ogre::Degree(0.8f)*rotation);
+
+		//Mouse movement
+		//yaw
+		int mouseXChange = mouseState.X.rel - mouseXstate;
+		//int mouseXChange = mMouse->getMouseState().X.rel - mouseXstate;
+		mPlayerNode->yaw(Ogre::Degree(-mRotate * mouseXChange), Ogre::Node::TS_WORLD);
+		mouseXstate = mouseState.X.rel;
+		//mouseXstate = mMouse->getMouseState().X.rel;
+		playerDirection = Ogre::Quaternion(Ogre::Degree(-mRotate * mouseXChange), Ogre::Vector3::UNIT_Y) * playerDirection;
+		internalXAxis = Ogre::Quaternion(Ogre::Degree(-mRotate * mouseXChange), Ogre::Vector3::UNIT_Y) * internalXAxis;
+		// modify currentDirectionc vector !!
+
+		//pitch
+		int mouseYChange = mouseState.Y.rel - mouseYstate;
+		//int mouseYChange = mMouse->getMouseState().Y.rel - mouseYstate;
+		mPlayerNode->pitch(Ogre::Degree(-mRotate * mouseYChange), Ogre::Node::TS_WORLD);
+		mouseYstate = mouseState.Y.rel;
+		//mouseYstate = mMouse->getMouseState().Y.rel;
+		playerDirection = Ogre::Quaternion(Ogre::Degree(-mRotate * mouseXChange), internalXAxis) * playerDirection;
+		// modify currentDirectionc vector !!
+
+		//mouseState.X.rel = (int)(window->getWidth()/2.0);
+		//mouseState.Y.rel = (int)(window->getHeight()/2.0);
 
 		root->_fireFrameRenderingQueued();
 		vpts[left]->update();
@@ -362,6 +434,15 @@ mainFunc()
 
 
 		if(window->isClosed()) render = false;
+	}
+
+	// shut down OIS::InputManager
+	if (mInputManager)
+	{
+		mInputManager->destroyInputObject(mMouse);
+		mInputManager->destroyInputObject(mKeyboard);
+		OIS::InputManager::destroyInputSystem(mInputManager);
+		mInputManager = 0;
 	}
 
 	ovr_Destroy(hmd);
