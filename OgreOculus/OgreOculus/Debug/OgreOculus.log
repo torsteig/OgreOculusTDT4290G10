@@ -1,0 +1,21 @@
+﻿Build started 26.10.2015 09:49:57.
+     1>Project "C:\OgreOculusTDT4290G10\OgreOculus\OgreOculus\OgreOculus.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\CL.exe /c /IC:\SDK\glew\include /IC:\SDK\glew\include\GL /IC:\SDK\OculusSDK\LibOVRKernel\Src /IC:\SDK\OculusSDK\LibOVR\Include /IC:\SDK\OgreSDK\include /IC:\SDK\OgreSDK\include\OIS /IC:\SDK\OgreSDK\include\OGRE /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc110.pdb" /Gd /TP /analyze- /errorReport:prompt Source.cpp
+         Source.cpp
+     1>c:\ogreoculustdt4290g10\ogreoculus\ogreoculus\source.cpp(18): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+     1>c:\ogreoculustdt4290g10\ogreoculus\ogreoculus\source.cpp(75): warning C4305: 'initializing' : truncation from 'double' to 'float'
+     1>c:\ogreoculustdt4290g10\ogreoculus\ogreoculus\source.cpp(78): warning C4305: 'argument' : truncation from 'double' to 'Ogre::Real'
+     1>c:\ogreoculustdt4290g10\ogreoculus\ogreoculus\source.cpp(82): warning C4305: 'argument' : truncation from 'double' to 'Ogre::Real'
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\OgreOculusTDT4290G10\OgreOculus\Debug\OgreOculus.exe" /INCREMENTAL /NOLOGO /LIBPATH:C:\SDK\OgreSDK\lib\Debug /LIBPATH:C:\SDK\glew\lib /LIBPATH:C:\SDK\OculusSDK\LibOVR\Lib\Windows\Win32\Release\VS2012 /LIBPATH:C:\SDK\OgreSDK\lib\debug\opt /LIBPATH:C:\SDK\OgreSDK\lib\debug OgreMain_d.lib OIS_d.lib RenderSystem_GL_d.lib Setupapi.lib LibOVR.lib Winmm.lib opengl32.lib glew32.lib ws2_32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\OgreOculusTDT4290G10\OgreOculus\Debug\OgreOculus.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\OgreOculusTDT4290G10\OgreOculus\Debug\OgreOculus.lib" /MACHINE:X86 Debug\Source.obj
+         OgreOculus.vcxproj -> C:\OgreOculusTDT4290G10\OgreOculus\Debug\OgreOculus.exe
+       PostBuildEvent:
+         copy "C:\OgreOculusTDT4290G10\OgreOculus\Debug\\OgreOculus.exe" "C:\SDK\OgreSDK\Bin\Debug"
+         :VCEnd
+                 1 file(s) copied.
+     1>Done Building Project "C:\OgreOculusTDT4290G10\OgreOculus\OgreOculus\OgreOculus.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:16.39
