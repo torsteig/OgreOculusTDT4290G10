@@ -15,7 +15,8 @@
 #include <RenderSystems/GL/OgreGLTexture.h>
 #include <OVR_CAPI.h>
 #include <OVR_CAPI_GL.h>
-#include <OVR_CAPI_0_7_0.h>rr
+#include <OVR_CAPI_0_7_0.h>
+#include "InputManager.h"
 
 enum eyes{left, right, nbEyes};
 
@@ -26,7 +27,7 @@ int max(int a, int b)
 
 mainFunc()
 {
-	//Create Root object 
+	//Create Root object
 	Ogre::Root* root = new Ogre::Root("plugin.cfg", "ogre.cfg");
 	//opengl
     root->loadPlugin("RenderSystem_GL_d");
@@ -57,33 +58,34 @@ mainFunc()
 	//Create scene manager and cameras
 	Ogre::SceneManager* smgr = root->createSceneManager(Ogre::ST_GENERIC);
 	Ogre::Camera* cams[nbEyes];
-	
+
 	//OCR cameras
 	cams[left] = smgr->createCamera("leftcam");
 	cams[right] = smgr->createCamera("rightcam");
 
 	//setup body and head cam
 	Ogre::SceneNode* mBodyNode = smgr->getRootSceneNode()->createChildSceneNode("BodyNode");
-	Ogre::SceneNode*  mBodyTiltNode = mBodyNode->createChildSceneNode();
-	Ogre::SceneNode*  mHeadNode = mBodyTiltNode->createChildSceneNode("HeadNode"); 
-	mBodyNode->setFixedYawAxis( true );	// don't roll! 
+	//Ogre::SceneNode*  mBodyTiltNode = mBodyNode->createChildSceneNode();
+	//Ogre::SceneNode*  mHeadNode = mBodyTiltNode->createChildSceneNode("HeadNode");
+	Ogre::SceneNode* mHeadNode = mBodyNode->createChildSceneNode("HeadNode");
+	mBodyNode->setFixedYawAxis( true );	// don't roll!
 
 	mHeadNode->attachObject(cams[left]);
 	mHeadNode->attachObject(cams[right]);
-	
+
 	//set cam position
 	float dist = 0.05;
 	cams[right]->setPosition(Ogre::Vector3(dist/2.0f, 0.0f, 0.0f));
-	
+
 	cams[right]->setNearClipDistance(0.001);
 
 	cams[left]->setPosition(Ogre::Vector3(-dist/2.0f, 0.0f,0.0f));
-	
+
 	cams[left]->setNearClipDistance(0.001);
 
 	mBodyNode->setPosition( 30.0,50.0, 100.0 ); //view is different from window camera
 	mBodyNode->lookAt(Ogre::Vector3::ZERO, Ogre::SceneNode::TS_WORLD);
-	
+
 
 	// Load Ogre resource paths from config file
     Ogre::ConfigFile cf;
@@ -111,7 +113,7 @@ mainFunc()
 	// Set resources
 	Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-	 
+
 	/*---------------------------------------------*/
 	/* OGRE MODEL CREATION BEGINS HERE              */
 	/*---------------------------------------------*/
@@ -127,9 +129,17 @@ mainFunc()
 
 	// Camera part here
 	Ogre::Camera* mCamera = smgr->createCamera("PlayerCam");
-	mCamera->setPosition(Ogre::Vector3(0, 50, 100));
-	mCamera->lookAt(Ogre::Vector3(0, 0, 0));
+	//mCamera->setPosition(Ogre::Vector3(0, 50, 100));
+	//mCamera->lookAt(Ogre::Vector3(0, 0, 0));
 	mCamera->setNearClipDistance(5);
+
+
+	Ogre::SceneNode* mPlayerNode = smgr->getRootSceneNode()->createChildSceneNode("PlayerNode");
+	mPlayerNode->attachObject(mCamera);
+	mPlayerNode->setPosition(0, 50.0, 100.0); //view is different from window camera
+	mPlayerNode->lookAt(Ogre::Vector3::ZERO, Ogre::SceneNode::TS_WORLD);
+	Ogre::Vector3 playerDirection = Ogre::Vector3(0,0,-1);
+
 
 	// Viewport and scene (is this even used?)
 	Ogre::Viewport* vp = window->addViewport(mCamera);
@@ -143,7 +153,7 @@ mainFunc()
 	//init glew
 	if(glewInit() != GLEW_OK)
 		exit(-3);
-	
+
 	//get texture sizes
 	ovrSizei texSizeL, texSizeR;
 	texSizeL = ovr_GetFovTextureSize(hmd, ovrEye_Left, hmdDesc.DefaultEyeFov[left], 1);
@@ -161,7 +171,7 @@ mainFunc()
 
 	//create ogre render texture
 	Ogre::GLTextureManager* textureManager = static_cast<Ogre::GLTextureManager*>(Ogre::GLTextureManager::getSingletonPtr());
-	Ogre::TexturePtr rtt_texture(textureManager->createManual("RttTex", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
+	Ogre::TexturePtr rtt_texture(textureManager->createManual("RttTex", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 		Ogre::TEX_TYPE_2D, bufferSize.w, bufferSize.h, 0, Ogre::PF_R8G8B8, Ogre::TU_RENDERTARGET));
 	Ogre::RenderTexture* rttEyes = rtt_texture->getBuffer(0, 0)->getRenderTarget();
 	Ogre::GLTexture* gltex = static_cast<Ogre::GLTexture*>(Ogre::GLTextureManager::getSingleton().getByName("RttTex").getPointer());
@@ -171,13 +181,13 @@ mainFunc()
 	Ogre::Viewport* vpts[nbEyes];
 	vpts[left]=rttEyes->addViewport(cams[left], 0, 0, 0, 0.5f);
 	vpts[right]=rttEyes->addViewport(cams[right], 1, 0.5f, 0, 0.5f);
-	vpts[left]->setBackgroundColour(Ogre::ColourValue(34, 89, 0)); // Black background 
+	vpts[left]->setBackgroundColour(Ogre::ColourValue(34, 89, 0)); // Black background
 	vpts[right]->setBackgroundColour(Ogre::ColourValue(34, 89, 0));
-	
+
 	ovrTexture* mirrorTexture;
 	if(ovr_CreateMirrorTextureGL(hmd, GL_RGB, hmdDesc.Resolution.w, hmdDesc.Resolution.h, &mirrorTexture) != ovrSuccess)
 		exit(-5);
-	Ogre::TexturePtr mirror_texture(textureManager->createManual("MirrorTex", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, 
+	Ogre::TexturePtr mirror_texture(textureManager->createManual("MirrorTex", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 		Ogre::TEX_TYPE_2D, hmdDesc.Resolution.w, hmdDesc.Resolution.h, 0, Ogre::PF_R8G8B8, Ogre::TU_RENDERTARGET));
 
 	//get GLIDs
@@ -209,9 +219,9 @@ mainFunc()
 	for(size_t eyeIndex(0); eyeIndex < ovrEye_Count; eyeIndex++)
 	{
 		//Get the projection matrix
-		OVR::Matrix4f proj = ovrMatrix4f_Projection(EyeRenderDesc[eyeIndex].Fov, 
-			static_cast<float>(0.01f), 
-			4000, 
+		OVR::Matrix4f proj = ovrMatrix4f_Projection(EyeRenderDesc[eyeIndex].Fov,
+			static_cast<float>(0.01f),
+			4000,
 			true);
 
 		//Convert it to Ogre matrix
@@ -229,11 +239,9 @@ mainFunc()
 	/*
 	Ogre::LogManager::getSingleton().logMessage("foer");
 	OIS::ParamList pl;
-
 	//OIS::InputManager* inputManager;
     size_t windowHnd = 0;
     std::ostringstream windowHndStr;
-
 	//tell OIS about the Ogre window
 	try
 	{
@@ -241,8 +249,6 @@ mainFunc()
     windowHndStr << windowHnd;
     pl.insert(std::make_pair(std::string("WINDOW"), windowHndStr.str()));
 	Ogre::LogManager::getSingleton().logMessage("mellom");
-
-
     OIS::InputManager* inputManager = OIS::InputManager::createInputSystem(pl);
 	}
 	catch (...)
@@ -257,11 +263,13 @@ mainFunc()
 	size_t hWnd = 0;
 
 	window->getCustomAttribute("WINDOW", &hWnd);
-	OIS::InputManager* inputManager = OIS::InputManager::createInputSystem(hWnd);
+	OIS::InputManager* oisInputManager = OIS::InputManager::createInputSystem(hWnd);
+	//InputManager* inputManager = InputManager::initialise(window); //(Ogre::RenderWindow *renderWindow
+	InputManager* mInputMgr = InputManager::getSingletonPtr();
+	//mInputMgr->initialise(window);
+	OIS::Keyboard* mKeyboard = static_cast<OIS::Keyboard*>(oisInputManager->createInputObject(OIS::OISKeyboard, true));
 
-	OIS::Keyboard* mKeyboard = static_cast<OIS::Keyboard*>(inputManager->createInputObject(OIS::OISKeyboard, true));
 
- 
     //Ogre::LogManager::getSingleton().logMessage();
 
 
@@ -273,7 +281,7 @@ mainFunc()
 	OVR::Quatf oculusOrient;
 	OVR::Vector3f oculusPos;
 	ovrLayerHeader* layers;
-	
+
 
 	// Render loop
 	while(render)
@@ -291,27 +299,50 @@ mainFunc()
 		oculusPos = pose.Translation;
 		//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z)));
 		mHeadNode->setOrientation(cameraOrientation * Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z));
-		
+
 		mKeyboard->capture();
 		if (mKeyboard->isKeyDown(OIS::KC_W))
 		{
-			Ogre::LogManager::getSingleton().logMessage("w pressed");
-			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1)));
-			mBodyNode->setOrientation(mHeadNode->getOrientation());
-			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1)));
-			Ogre::Vector3 direction = mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1);
-			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
-			mBodyNode->setPosition( mBodyNode->getPosition() + direction );
-			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
+			//Ogre::LogManager::getSingleton().logMessage("w pressed");
+			mPlayerNode->translate(playerDirection);
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation()));
+			//mBodyNode->setOrientation(mHeadNode->getOrientation());
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1)));
+			//Ogre::Vector3 direction = mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1);
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
+			//mBodyNode->setPosition( mBodyNode->getPosition() + direction );
+			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mBodyNode->getPosition()));
+			//Ogre::LogManager::getSingleton().logMessage("error?");
+		}
+		if (mKeyboard->isKeyDown(OIS::KC_S))
+		{
+			mPlayerNode->translate(-playerDirection);
+		}
+		if (mKeyboard->isKeyDown(OIS::KC_A))
+		{
+			Ogre::Vector3 temp = Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y) * playerDirection;// v2 = Quaternion(Degree(-90), Vector3::UNIT_Y) * v1
+			// set y = 0 and normalize?
+			mPlayerNode->translate(temp);
+		}
+		if (mKeyboard->isKeyDown(OIS::KC_D))
+		{
+			Ogre::Vector3 temp = Ogre::Quaternion(Ogre::Degree(-90), Ogre::Vector3::UNIT_Y) * playerDirection;// v2 = Quaternion(Degree(-90), Vector3::UNIT_Y) * v1
+			// set y = 0 and normalize?
+			mPlayerNode->translate(temp);
+		}
+		if (mKeyboard->isKeyDown(OIS::KC_ESCAPE))
+		{
+			render = false;
+			//break;
 		}
         //float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
         //float leftRight = (mKeyboard->isKeyDown( OIS::KC_A ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_D ) ? 0 : -1);
 		//float rotation = (mKeyboard->isKeyDown( OIS::KC_E ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_Q ) ? 0 : -1);
         //Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X;
         //Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
-		
 
-        //mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight );		
+
+        //mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight );
 		//	mBodyNode->yaw(Ogre::Degree(0.8f)*rotation);
 
 		root->_fireFrameRenderingQueued();
@@ -319,16 +350,16 @@ mainFunc()
 		vpts[right]->update();
 
 		//Copy the rendered image to the Oculus Swap Texture
-		glCopyImageSubData(renderTextureID, GL_TEXTURE_2D, 0, 0, 0, 0, 
-		((ovrGLTexture*)(&textureSet->Textures[textureSet->CurrentIndex]))->OGL.TexId, GL_TEXTURE_2D, 0, 0, 0, 0, 
+		glCopyImageSubData(renderTextureID, GL_TEXTURE_2D, 0, 0, 0, 0,
+		((ovrGLTexture*)(&textureSet->Textures[textureSet->CurrentIndex]))->OGL.TexId, GL_TEXTURE_2D, 0, 0, 0, 0,
 		bufferSize.w,bufferSize.h, 1);
 		layers = &layer.Header;
-		
+
 
 		ovr_SubmitFrame(hmd, 0, nullptr, &layers, 1);
 
 		window->update();
-		
+
 
 		if(window->isClosed()) render = false;
 	}
