@@ -12,20 +12,23 @@ OgreOculus::OgreOculus(void)
 	window(0),
 	mPlayerNode(0),
 	mCamera(0),
+	mDirection(Ogre::Vector3::ZERO),
+	mMove(1),
+	mRotate(0.13),
 
 	hmd(0),
 
 	mInputManager(0),
 	mMouse(0),
-	mKeyboard(0),
-	mCameraMan(0)
+	mKeyboard(0)//,
+	//mCameraMan(0)
 {
 
 }
 
 OgreOculus::~OgreOculus(void)
 {
-	if (mCameraMan) delete mCameraMan;
+	//if (mCameraMan) delete mCameraMan;
 
 	windowClosed(window);
 	delete root;
@@ -150,6 +153,7 @@ int OgreOculus::go(void)
 
 	// Camera part here
 	createCamera();
+	
 	/*
 	Ogre::Camera* mCamera = smgr->createCamera("PlayerCam");
 	//mCamera->setPosition(Ogre::Vector3(0, 50, 100));
@@ -345,7 +349,7 @@ int OgreOculus::go(void)
 	//int mouseXstate = mMouse->getMouseState().X.rel;
 	//int mouseYstate = mMouse->getMouseState().Y.rel;
 	*/
-	//static Ogre::Real move = 250;
+	//static Ogre::Real move = 1;
 	// Render loop
 	while(render)
 	{
@@ -363,9 +367,10 @@ int OgreOculus::go(void)
 		//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z)));
 		mHeadNode->setOrientation(cameraOrientation * Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z));
 
-		/*
+		
 		mKeyboard->capture();
 		mMouse->capture();
+		/*
 		Ogre::Vector3 dirVec = Ogre::Vector3::ZERO;
 		
 		//mMouse->getMouseState();
@@ -460,6 +465,7 @@ int OgreOculus::go(void)
 		//mouseState.X.rel = (int)(window->getWidth()/2.0);
 		//mouseState.Y.rel = (int)(window->getHeight()/2.0);
 		*/
+		mPlayerNode->translate(mDirection, Ogre::Node::TS_LOCAL);
 
 		root->_fireFrameRenderingQueued();
 		vpts[left]->update();
@@ -490,11 +496,15 @@ int OgreOculus::go(void)
 void OgreOculus::createCamera(void)
 {
 	mCamera = smgr->createCamera("PlayerCam");
-	mCamera->setPosition(Ogre::Vector3(0, 50, 100));
-	mCamera->lookAt(Ogre::Vector3(0, 0, 0));
+	//mCamera->setPosition(Ogre::Vector3(0, 50, 100));
+	//mCamera->lookAt(Ogre::Vector3(0, 0, 0));
 	mCamera->setNearClipDistance(5);
 
-	mCameraMan = new OgreBites::SdkCameraMan(mCamera);
+	mPlayerNode = smgr->getRootSceneNode()->createChildSceneNode("PlayerNode", Ogre::Vector3(0,50,100));
+	mPlayerNode->attachObject(mCamera);
+	mPlayerNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::SceneNode::TS_WORLD);
+
+	//mCameraMan = new OgreBites::SdkCameraMan(mCamera);
 }
 
 void OgreOculus::createFrameListener(void)
@@ -508,40 +518,87 @@ void OgreOculus::createFrameListener(void)
 	mKeyboard = static_cast<OIS::Keyboard*>(mInputManager->createInputObject(OIS::OISKeyboard, true));
 	mMouse = static_cast<OIS::Mouse*>(mInputManager->createInputObject(OIS::OISMouse, true));
 
-	//mMouse->setEventCallback(this);
-	//mKeyboard->setEventCallback(this);
+	mMouse->setEventCallback(this);
+	mKeyboard->setEventCallback(this);
 
 	//
 	//root->addFrameListener(this);
 }
 
-bool OgreOculus::keyPressed(const OIS::KeyEvent &arg)
+bool OgreOculus::keyPressed(const OIS::KeyEvent &ke)
 {
-	if (arg.key == OIS::KC_W || arg.key == OIS::KC_UP)
+	switch (ke.key)
+	{
+	case OIS::KC_W:
+	case OIS::KC_UP:
+		mDirection.z = -mMove;
+		break;
+
+	case OIS::KC_S:
+	case OIS::KC_DOWN:
+		mDirection.z = mMove;
+		break;
+
+	case OIS::KC_A:
+	case OIS::KC_LEFT:
+		mDirection.x = -mMove;
+		break;
+
+	case OIS::KC_D:
+	case OIS::KC_RIGHT:
+		mDirection.x = mMove;
+		break;
+	}
+	/*
+	if (ke.key == OIS::KC_W || ke.key == OIS::KC_UP)
 	{
 		Ogre::LogManager::getSingletonPtr()->logMessage("w pressed");
-		mPlayerNode->translate(Ogre::Vector3(0,0,-1));
+		//mPlayerNode->translate(Ogre::Vector3(0,0,-1));
+	}
+	*/
+	return true;
+}
 
+bool OgreOculus::keyReleased(const OIS::KeyEvent &ke)
+{
+	switch (ke.key)
+	{
+	case OIS::KC_W:
+	case OIS::KC_UP:
+		mDirection.z = 0;
+		break;
+
+	case OIS::KC_S:
+	case OIS::KC_DOWN:
+		mDirection.z = 0;
+		break;
+
+	case OIS::KC_A:
+	case OIS::KC_LEFT:
+		mDirection.x = 0;
+		break;
+
+	case OIS::KC_D:
+	case OIS::KC_RIGHT:
+		mDirection.x = 0;
+		break;
 	}
 	return true;
 }
 
-bool OgreOculus::keyReleased(const OIS::KeyEvent &arg)
+bool OgreOculus::mouseMoved(const OIS::MouseEvent &me)
+{
+	mPlayerNode->yaw(Ogre::Degree(-mRotate * me.state.X.rel), Ogre::Node::TS_WORLD);
+	mPlayerNode->pitch(Ogre::Degree(-mRotate * me.state.Y.rel), Ogre::Node::TS_LOCAL);
+	return true;
+}
+
+bool OgreOculus::mousePressed(const OIS::MouseEvent &me, OIS::MouseButtonID id)
 {
 	return true;
 }
 
-bool OgreOculus::mouseMoved(const OIS::MouseEvent &arg)
-{
-	return true;
-}
-
-bool OgreOculus::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
-{
-	return true;
-}
-
-bool OgreOculus::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
+bool OgreOculus::mouseReleased(const OIS::MouseEvent &me, OIS::MouseButtonID id)
 {
 	return true;
 }
