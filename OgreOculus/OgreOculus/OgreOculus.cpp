@@ -8,13 +8,26 @@ int max(int a, int b)
 
 OgreOculus::OgreOculus(void)
 	: root(0),
-	hmd(0)
+	smgr(0),
+	window(0),
+	mPlayerNode(0),
+	mCamera(0),
+
+	hmd(0),
+
+	mInputManager(0),
+	mMouse(0),
+	mKeyboard(0),
+	mCameraMan(0)
 {
 
 }
 
 OgreOculus::~OgreOculus(void)
 {
+	if (mCameraMan) delete mCameraMan;
+
+	windowClosed(window);
 	delete root;
 }
 
@@ -47,10 +60,11 @@ int OgreOculus::go(void)
 	ovr_SetInt(hmd, "PerfHudMode", ovrPerfHud_Off);
 
 	//create a window
-	Ogre::RenderWindow* window = root->createRenderWindow("Ogre + Oculus = <4", hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2, false);
+	/*Ogre::RenderWindow* */window = root->createRenderWindow("Ogre + Oculus = <3", hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2, false);
 
 	//Create scene manager and cameras
-	Ogre::SceneManager* smgr = root->createSceneManager(Ogre::ST_GENERIC);
+	//Ogre::SceneManager* smgr = root->createSceneManager(Ogre::ST_GENERIC);
+	smgr = root->createSceneManager(Ogre::ST_GENERIC);
 	Ogre::Camera* cams[nbEyes];
 
 	//OCR cameras
@@ -118,21 +132,36 @@ int OgreOculus::go(void)
 	Ogre::SceneNode* ogreNode = smgr->getRootSceneNode()->createChildSceneNode();
 	ogreNode->attachObject(ogreEntity);
 
+	Ogre::Plane plane(Ogre::Vector3::UNIT_Y, 0);
+	Ogre::MeshManager::getSingleton().createPlane(
+		"ground",
+		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		plane, 
+		1500, 1500, 20, 20, 
+		true, 
+		1, 5, 5, 
+		Ogre::Vector3::UNIT_Z);
+	Ogre::Entity* groundEntity = smgr->createEntity("ground");
+	smgr->getRootSceneNode()->createChildSceneNode()->attachObject(groundEntity);
+	groundEntity->setMaterialName("Examples/Rockwall");
 	/*---------------------------------------------*/
 	/* OGRE MODEL CREATION ENDS HERE                */
 	/*---------------------------------------------*/
 
 	// Camera part here
+	createCamera();
+	/*
 	Ogre::Camera* mCamera = smgr->createCamera("PlayerCam");
 	//mCamera->setPosition(Ogre::Vector3(0, 50, 100));
 	//mCamera->lookAt(Ogre::Vector3(0, 0, 0));
-	mCamera->setNearClipDistance(Ogre::Real(0.001));
+	mCamera->setNearClipDistance(Ogre::Real(5));
 
 	Ogre::Vector3 initialCameraPosition = Ogre::Vector3(0.0, 50.0, 100.0);
 	Ogre::Vector3 initialCameraLookAt = Ogre::Vector3::ZERO;
 	Ogre::Real movementSpeed = Ogre::Real(1);
 	Ogre::Real mRotate = Ogre::Real(0.13);
-	Ogre::SceneNode* mPlayerNode = smgr->getRootSceneNode()->createChildSceneNode("PlayerNode");
+	//Ogre::SceneNode* mPlayerNode = smgr->getRootSceneNode()->createChildSceneNode("PlayerNode");
+	mPlayerNode = smgr->getRootSceneNode()->createChildSceneNode("PlayerNode");
 	mPlayerNode->attachObject(mCamera);
 	//mPlayerNode->setPosition(0, 50.0, 100.0); //view is different from window camera
 	mPlayerNode->setPosition(initialCameraPosition);
@@ -142,7 +171,7 @@ int OgreOculus::go(void)
 	Ogre::Vector3 playerDirection = initialCameraLookAt - initialCameraPosition;
 	playerDirection.normalise();
 	//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(playerDirection));
-
+	*/
 
 	// Viewport and scene (is this even used?)
 	Ogre::Viewport* vp = window->addViewport(mCamera);
@@ -262,7 +291,8 @@ int OgreOculus::go(void)
 	}
 	Ogre::LogManager::getSingleton().logMessage("etter");
 	*/
-
+	/******************************************************/
+	/*
 	size_t hWnd = 0;
 
 	window->getCustomAttribute("WINDOW", &hWnd);
@@ -292,7 +322,9 @@ int OgreOculus::go(void)
 	//mouseState.Y.rel = (int)(window->getHeight()/2.0);
 
     //Ogre::LogManager::getSingleton().logMessage();
-
+	*/
+	createFrameListener();
+	/******************************************************************/
 
 	ovrFrameTiming hmdFrameTiming;
 	Ogre::Vector3 cameraPosition;
@@ -303,6 +335,7 @@ int OgreOculus::go(void)
 	OVR::Vector3f oculusPos;
 	ovrLayerHeader* layers;
 
+	/* MOUSE MOVEMENT (OLD)
 	int mouseXstate = mouseState.X.rel;
 	int mouseYstate = mouseState.Y.rel;
 	//Ogre::Vector3 internalXAxis = Ogre::Vector3(1,0,0);
@@ -311,7 +344,8 @@ int OgreOculus::go(void)
 	internalXAxis.normalise();
 	//int mouseXstate = mMouse->getMouseState().X.rel;
 	//int mouseYstate = mMouse->getMouseState().Y.rel;
-
+	*/
+	//static Ogre::Real move = 250;
 	// Render loop
 	while(render)
 	{
@@ -329,21 +363,26 @@ int OgreOculus::go(void)
 		//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z)));
 		mHeadNode->setOrientation(cameraOrientation * Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z));
 
+		/*
 		mKeyboard->capture();
 		mMouse->capture();
-
+		Ogre::Vector3 dirVec = Ogre::Vector3::ZERO;
+		
 		//mMouse->getMouseState();
 
 		if (mKeyboard->isKeyDown(OIS::KC_W) || mKeyboard->isKeyDown(OIS::KC_UP))
 		{
+			dirVec.z -= move;
 			//Ogre::LogManager::getSingleton().logMessage("w pressed");
-			mPlayerNode->translate(playerDirection*movementSpeed);
+			//mPlayerNode->translate(playerDirection*movementSpeed);
 			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mouseState.X.rel));
+
 			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mMouse->getMouseState().X.rel));
 			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mouseState.X.abs));
 			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mMouse->getMouseState().X.abs));
 			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mouseState.X.rel - mouseXstate));
 			Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mMouse->getMouseState().X.rel - mouseXstate));
+
 			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation()));
 			//mBodyNode->setOrientation(mHeadNode->getOrientation());
 			//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(mHeadNode->getOrientation() * Ogre::Vector3(0, 0, -1)));
@@ -355,41 +394,51 @@ int OgreOculus::go(void)
 		}
 		if (mKeyboard->isKeyDown(OIS::KC_S) || mKeyboard->isKeyDown(OIS::KC_DOWN))
 		{
-			mPlayerNode->translate(-playerDirection*movementSpeed);
+			dirVec.z += move;
+			//mPlayerNode->translate(-playerDirection*movementSpeed);
 		}
 		if (mKeyboard->isKeyDown(OIS::KC_A) || mKeyboard->isKeyDown(OIS::KC_LEFT))
 		{
+			dirVec.x -= move;
+
 			Ogre::Vector3 temp = Ogre::Quaternion(Ogre::Degree(90), Ogre::Vector3::UNIT_Y) * playerDirection;// v2 = Quaternion(Degree(-90), Vector3::UNIT_Y) * v1
 			// set y = 0 and normalize?
 			temp.y = 0;
 			temp.normalise();
 			mPlayerNode->translate(temp*movementSpeed);
+
 		}
 		if (mKeyboard->isKeyDown(OIS::KC_D) || mKeyboard->isKeyDown(OIS::KC_RIGHT))
 		{
+			dirVec.x += move;
+
 			Ogre::Vector3 temp = Ogre::Quaternion(Ogre::Degree(-90), Ogre::Vector3::UNIT_Y) * playerDirection;// v2 = Quaternion(Degree(-90), Vector3::UNIT_Y) * v1
 			// set y = 0 and normalize?
 			temp.y = 0;
 			temp.normalise();
 			mPlayerNode->translate(temp*movementSpeed);
+
 		}
 		if (mKeyboard->isKeyDown(OIS::KC_ESCAPE))
 		{
 			render = false;
 			//break;
 		}
+		//mPlayerNode->translate(dirVec, Ogre::Node::TS_LOCAL);
+		smgr->getSceneNode("PlayerNode")->translate(dirVec, Ogre::Node::TS_LOCAL);
         //float forward = (mKeyboard->isKeyDown( OIS::KC_W ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_S ) ? 0 : -1);
         //float leftRight = (mKeyboard->isKeyDown( OIS::KC_A ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_D ) ? 0 : -1);
 		//float rotation = (mKeyboard->isKeyDown( OIS::KC_E ) ? 0 : 1) + (mKeyboard->isKeyDown( OIS::KC_Q ) ? 0 : -1);
         //Ogre::Vector3 dirX = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_X;
         //Ogre::Vector3 dirZ = mBodyTiltNode->_getDerivedOrientation()*Ogre::Vector3::UNIT_Z;
-
+		*/
 
         //mBodyNode->setPosition( mBodyNode->getPosition() + dirZ*forward +dirX*leftRight );
 		//	mBodyNode->yaw(Ogre::Degree(0.8f)*rotation);
 
 		//Mouse movement
 		//yaw
+		/*
 		int mouseXChange = mouseState.X.rel - mouseXstate;
 		//int mouseXChange = mMouse->getMouseState().X.rel - mouseXstate;
 		mPlayerNode->yaw(Ogre::Degree(-mRotate * mouseXChange), Ogre::Node::TS_WORLD);
@@ -410,6 +459,7 @@ int OgreOculus::go(void)
 
 		//mouseState.X.rel = (int)(window->getWidth()/2.0);
 		//mouseState.Y.rel = (int)(window->getHeight()/2.0);
+		*/
 
 		root->_fireFrameRenderingQueued();
 		vpts[left]->update();
@@ -430,15 +480,6 @@ int OgreOculus::go(void)
 		if(window->isClosed()) render = false;
 	}
 
-	// shut down OIS::InputManager
-	if (mInputManager)
-	{
-		mInputManager->destroyInputObject(mMouse);
-		mInputManager->destroyInputObject(mKeyboard);
-		OIS::InputManager::destroyInputSystem(mInputManager);
-		mInputManager = 0;
-	}
-
 	ovr_Destroy(hmd);
 	ovr_Shutdown();
 
@@ -446,11 +487,41 @@ int OgreOculus::go(void)
 	return EXIT_SUCCESS;
 }
 
+void OgreOculus::createCamera(void)
+{
+	mCamera = smgr->createCamera("PlayerCam");
+	mCamera->setPosition(Ogre::Vector3(0, 50, 100));
+	mCamera->lookAt(Ogre::Vector3(0, 0, 0));
+	mCamera->setNearClipDistance(5);
+
+	mCameraMan = new OgreBites::SdkCameraMan(mCamera);
+}
+
+void OgreOculus::createFrameListener(void)
+{
+	Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
+
+	size_t hWnd = 0;
+	window->getCustomAttribute("WINDOW", &hWnd);
+	mInputManager = OIS::InputManager::createInputSystem(hWnd);
+
+	mKeyboard = static_cast<OIS::Keyboard*>(mInputManager->createInputObject(OIS::OISKeyboard, true));
+	mMouse = static_cast<OIS::Mouse*>(mInputManager->createInputObject(OIS::OISMouse, true));
+
+	//mMouse->setEventCallback(this);
+	//mKeyboard->setEventCallback(this);
+
+	//
+	//root->addFrameListener(this);
+}
+
 bool OgreOculus::keyPressed(const OIS::KeyEvent &arg)
 {
-	if (arg.key == OIS::KC_W)
+	if (arg.key == OIS::KC_W || arg.key == OIS::KC_UP)
 	{
-		// w pressed
+		Ogre::LogManager::getSingletonPtr()->logMessage("w pressed");
+		mPlayerNode->translate(Ogre::Vector3(0,0,-1));
+
 	}
 	return true;
 }
@@ -473,6 +544,21 @@ bool OgreOculus::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
 bool OgreOculus::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
 {
 	return true;
+}
+
+void OgreOculus::windowClosed(Ogre::RenderWindow* rw)
+{
+	if (rw == window)
+	{
+		if (mInputManager)
+		{
+			mInputManager->destroyInputObject(mMouse);
+			mInputManager->destroyInputObject(mKeyboard);
+
+			OIS::InputManager::destroyInputSystem(mInputManager);
+			mInputManager = 0;
+		}
+	}
 }
 
 mainFunc()

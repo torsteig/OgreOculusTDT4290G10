@@ -20,7 +20,9 @@
 #include <OVR_CAPI_GL.h>
 #include <OVR_CAPI_0_7_0.h>
 
-class OgreOculus : public Ogre::FrameListener, public Ogre::WindowEventListener, public OIS::KeyListener, public OIS::MouseListener
+#include <SdkCameraMan.h>
+
+class OgreOculus : public Ogre::WindowEventListener, public OIS::KeyListener, public OIS::MouseListener
 {
 public:
 	OgreOculus(void);
@@ -29,14 +31,30 @@ public:
 	virtual int go(void);
 
 protected:
+	virtual void createFrameListener(void);
+	virtual void createCamera(void);
+
 	virtual bool keyPressed(const OIS::KeyEvent &arg);
 	virtual bool keyReleased(const OIS::KeyEvent &arg);
     virtual bool mouseMoved(const OIS::MouseEvent &arg);
     virtual bool mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
     virtual bool mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
 
-	Ogre::Root*			root;
-	ovrHmd				hmd;
+	virtual void windowClosed(Ogre::RenderWindow* rw);
+
+	Ogre::Root*					root;
+	Ogre::SceneManager*			smgr;
+	Ogre::RenderWindow*			window;
+	Ogre::SceneNode*			mPlayerNode;
+	Ogre::Camera*				mCamera;
+
+	ovrHmd						hmd;
+
+	OIS::InputManager*			mInputManager;
+	OIS::Mouse*					mMouse;
+	OIS::Keyboard*				mKeyboard;
+
+	OgreBites::SdkCameraMan*	mCameraMan;
 };
 
 #endif
