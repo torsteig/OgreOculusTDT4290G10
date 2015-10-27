@@ -93,9 +93,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="InputManager.cpp" />
-    <ClCompile Include="Source.cpp" />
+    <ClCompile Include="OgreOculus.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="OgreOculus.h" />
     <ClInclude Include="InputManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

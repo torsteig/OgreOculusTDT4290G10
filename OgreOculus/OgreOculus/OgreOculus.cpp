@@ -1,34 +1,28 @@
-#ifdef _WIN32
-#define mainFunc() int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,LPSTR lpCmdLine, int nCmdShow)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <glew.h>
-#else
-#define mainFunc() int main(void)
-#endif
-#include <iostream>
-#include <Ogre.h>
-#include <OIS.h>
-#include <OVR.h>
-#include <RenderSystems/GL/OgreGLTextureManager.h>
-#include <RenderSystems/GL/OgreGLRenderSystem.h>
-#include <RenderSystems/GL/OgreGLTexture.h>
-#include <OVR_CAPI.h>
-#include <OVR_CAPI_GL.h>
-#include <OVR_CAPI_0_7_0.h>
-//#include "InputManager.h"
+#include "OgreOculus.h"
 
 enum eyes{left, right, nbEyes};
-
 int max(int a, int b)
 {
 	if (a > b) return a; return b;
 }
 
-mainFunc()
+OgreOculus::OgreOculus(void)
+	: root(0),
+	hmd(0)
+{
+
+}
+
+OgreOculus::~OgreOculus(void)
+{
+	delete root;
+}
+
+int OgreOculus::go(void)
 {
 	//Create Root object
-	Ogre::Root* root = new Ogre::Root("plugin.cfg", "ogre.cfg");
+	//Ogre::Root* root = new Ogre::Root("plugin.cfg", "ogre.cfg");
+	root = new Ogre::Root("plugin.cfg", "ogre.cfg");
 	//opengl
     root->loadPlugin("RenderSystem_GL_d");
     root->setRenderSystem(root->getRenderSystemByName("OpenGL Rendering Subsystem"));
@@ -53,7 +47,7 @@ mainFunc()
 	ovr_SetInt(hmd, "PerfHudMode", ovrPerfHud_Off);
 
 	//create a window
-	Ogre::RenderWindow* window = root->createRenderWindow("Ogre + Oculus = <3", hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2, false);
+	Ogre::RenderWindow* window = root->createRenderWindow("Ogre + Oculus = <4", hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2, false);
 
 	//Create scene manager and cameras
 	Ogre::SceneManager* smgr = root->createSceneManager(Ogre::ST_GENERIC);
@@ -450,4 +444,48 @@ mainFunc()
 
 	delete root;
 	return EXIT_SUCCESS;
+}
+
+bool OgreOculus::keyPressed(const OIS::KeyEvent &arg)
+{
+	if (arg.key == OIS::KC_W)
+	{
+		// w pressed
+	}
+	return true;
+}
+
+bool OgreOculus::keyReleased(const OIS::KeyEvent &arg)
+{
+	return true;
+}
+
+bool OgreOculus::mouseMoved(const OIS::MouseEvent &arg)
+{
+	return true;
+}
+
+bool OgreOculus::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
+{
+	return true;
+}
+
+bool OgreOculus::mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id)
+{
+	return true;
+}
+
+mainFunc()
+{
+	OgreOculus oo;
+
+	try {
+		oo.go();
+	} catch(Ogre::Exception& e) {
+		std::cerr << "An exception has occurred: " <<
+                e.getFullDescription().c_str() << std::endl;
+	}
+
+	return 0;
+
 }
