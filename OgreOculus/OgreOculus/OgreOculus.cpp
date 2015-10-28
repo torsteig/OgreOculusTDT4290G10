@@ -1,6 +1,6 @@
 #include "OgreOculus.h"
 
-enum eyes{left, right, nbEyes};
+//enum eyes{left, right, nbEyes};
 int max(int a, int b)
 {
 	if (a > b) return a; return b;
@@ -15,6 +15,8 @@ OgreOculus::OgreOculus(void)
 	mDirection(Ogre::Vector3::ZERO),
 	mMove(1),
 	mRotate(0.13),
+	initialOculusOrientation(Ogre::Quaternion(1,0,0,0)),
+	initialOculusPosition(Ogre::Vector3(0,0,0)),
 
 	hmd(0),
 
@@ -68,6 +70,7 @@ int OgreOculus::go(void)
 	//Create scene manager and cameras
 	//Ogre::SceneManager* smgr = root->createSceneManager(Ogre::ST_GENERIC);
 	smgr = root->createSceneManager(Ogre::ST_GENERIC);
+	/*
 	Ogre::Camera* cams[nbEyes];
 
 	//OCR cameras
@@ -97,6 +100,7 @@ int OgreOculus::go(void)
 
 	mBodyNode->setPosition( 30.0,50.0, 100.0 ); //view is different from window camera
 	mBodyNode->lookAt(Ogre::Vector3::ZERO, Ogre::SceneNode::TS_WORLD);
+	*/
 
 
 	// Load Ogre resource paths from config file
@@ -331,12 +335,12 @@ int OgreOculus::go(void)
 	/******************************************************************/
 
 	ovrFrameTiming hmdFrameTiming;
-	Ogre::Vector3 cameraPosition;
-	Ogre::Quaternion cameraOrientation;
+	//Ogre::Vector3 cameraPosition;
+	//Ogre::Quaternion cameraOrientation;
 	ovrTrackingState ts;
 	OVR::Posef pose;
-	OVR::Quatf oculusOrient;
-	OVR::Vector3f oculusPos;
+	//OVR::Quatf oculusOrient;
+	//OVR::Vector3f oculusPos;
 	ovrLayerHeader* layers;
 
 	/* MOUSE MOVEMENT (OLD)
@@ -358,14 +362,7 @@ int OgreOculus::go(void)
 		textureSet->CurrentIndex = (textureSet->CurrentIndex + 1) % textureSet->TextureCount;
 		//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(textureSet->CurrentIndex));
 
-		hmdFrameTiming = ovr_GetFrameTiming(hmd, 0);
-		ts = ovr_GetTrackingState(hmd, hmdFrameTiming.DisplayMidpointSeconds);
-		pose = ts.HeadPose.ThePose;
-		ovr_CalcEyePoses(pose, offset, layer.RenderPose);
-		oculusOrient = pose.Rotation;
-		oculusPos = pose.Translation;
-		//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z)));
-		mHeadNode->setOrientation(cameraOrientation * Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z));
+		
 
 		
 		mKeyboard->capture();
@@ -467,6 +464,23 @@ int OgreOculus::go(void)
 		*/
 		mPlayerNode->translate(mDirection, Ogre::Node::TS_LOCAL);
 
+		hmdFrameTiming = ovr_GetFrameTiming(hmd, 0);
+		ts = ovr_GetTrackingState(hmd, hmdFrameTiming.DisplayMidpointSeconds);
+		pose = ts.HeadPose.ThePose;
+		ovr_CalcEyePoses(pose, offset, layer.RenderPose);
+		oculusOrient = pose.Rotation;
+		oculusPos = pose.Translation;
+		//Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z)));
+		mHeadNode->setOrientation(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z) * initialOculusOrientation.Inverse());
+		//mHeadNode->setOrientation(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z) * initialOculusOrientation.Inverse() * mPlayerNode->getOrientation()); // mPlayerNode->getOrientation() * Ogre::Quaternion NB maybe other way around: Quat * mPlayer
+		//mHeadNode->setOrientation(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z) * mPlayerNode->getOrientation());
+
+		/***** head tracking ****/
+		mHeadNode->setPosition(mPlayerNode->getPosition() * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
+		//mHeadNode->setPosition(mPlayerNode->getPosition() * (Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition));
+		//mHeadNode->setPosition(Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition);
+		/****** ******/
+
 		root->_fireFrameRenderingQueued();
 		vpts[left]->update();
 		vpts[right]->update();
@@ -501,8 +515,50 @@ void OgreOculus::createCamera(void)
 	mCamera->setNearClipDistance(5);
 
 	mPlayerNode = smgr->getRootSceneNode()->createChildSceneNode("PlayerNode", Ogre::Vector3(0,50,100));
-	mPlayerNode->attachObject(mCamera);
+	mHeadNode = mPlayerNode->createChildSceneNode("HeadNode");
+	//mPlayerNode->attachObject(mCamera);
+	mHeadNode->attachObject(mCamera);
 	mPlayerNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::SceneNode::TS_WORLD);
+	mPlayerNode->setFixedYawAxis(true);
+
+	//Ogre::Camera* cams[nbEyes];
+
+	//OCR cameras
+	cams[left] = smgr->createCamera("leftcam");
+	cams[right] = smgr->createCamera("rightcam");
+
+	//setup body and head cam
+	//Ogre::SceneNode* mBodyNode = smgr->getRootSceneNode()->createChildSceneNode("BodyNode");
+	//Ogre::SceneNode*  mBodyTiltNode = mBodyNode->createChildSceneNode();
+	//Ogre::SceneNode*  mHeadNode = mBodyTiltNode->createChildSceneNode("HeadNode");
+	//Ogre::SceneNode* mHeadNode = mBodyNode->createChildSceneNode("HeadNode");
+	//mHeadNode = mPlayerNode->createChildSceneNode("HeadNode");
+	//mBodyNode->setFixedYawAxis( true );	// don't roll!
+	//mPlayerNode->setFixedYawAxis(true);
+	//mHeadNode->attachObject(mCamera);
+	//mHeadNode->attachObject(cams[left]);
+	//mHeadNode->attachObject(cams[right]);
+
+	//set cam position
+	//float dist = 0.05;
+	Ogre::Real dist = Ogre::Real(0.05);
+	cams[right]->setNearClipDistance(Ogre::Real(0.001));
+	cams[left]->setNearClipDistance(Ogre::Real(0.001));
+	Ogre::SceneNode* mRightEyeNode = mHeadNode->createChildSceneNode("RightEyeNode", Ogre::Vector3(dist/2.0f, 0.0f, 0.0f));
+	Ogre::SceneNode* mLeftEyeNode = mHeadNode->createChildSceneNode("LeftEyeNode", Ogre::Vector3(-dist/2.0f, 0.0f, 0.0f));
+	mRightEyeNode->attachObject(cams[right]);
+	mLeftEyeNode->attachObject(cams[left]);
+	//smgr->getSceneNode()
+	//cams[right]->setPosition(Ogre::Vector3(dist/2.0f, 0.0f, 0.0f));
+
+	//cams[right]->setNearClipDistance(Ogre::Real(0.001));
+
+	//cams[left]->setPosition(Ogre::Vector3(-dist/2.0f, 0.0f,0.0f));
+
+	//cams[left]->setNearClipDistance(Ogre::Real(0.001));
+
+	//mBodyNode->setPosition( 30.0,50.0, 100.0 ); //view is different from window camera
+	//mBodyNode->lookAt(Ogre::Vector3::ZERO, Ogre::SceneNode::TS_WORLD);
 
 	//mCameraMan = new OgreBites::SdkCameraMan(mCamera);
 }
@@ -547,6 +603,18 @@ bool OgreOculus::keyPressed(const OIS::KeyEvent &ke)
 	case OIS::KC_D:
 	case OIS::KC_RIGHT:
 		mDirection.x = mMove;
+		break;
+	case OIS::KC_R:
+		//reset camera
+
+		initialOculusOrientation = Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z);
+		initialOculusPosition = Ogre::Vector3(oculusPos.x, oculusPos.y, oculusPos.z);
+		
+		// values should be changed
+		mPlayerNode->setPosition(Ogre::Vector3(0,50,100));
+		mPlayerNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::SceneNode::TS_WORLD);
+		//mHeadNode->setOrientation(mPlayerNode->getOrientation());
+		
 		break;
 	}
 	/*

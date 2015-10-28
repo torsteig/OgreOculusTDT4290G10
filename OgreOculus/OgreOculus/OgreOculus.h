@@ -22,6 +22,8 @@
 
 //#include <SdkCameraMan.h>
 
+enum eyes{left, right, nbEyes};
+
 class OgreOculus : public Ogre::WindowEventListener, public OIS::KeyListener, public OIS::MouseListener
 {
 public:
@@ -46,12 +48,19 @@ protected:
 	Ogre::SceneManager*			smgr;
 	Ogre::RenderWindow*			window;
 	Ogre::SceneNode*			mPlayerNode;
+	Ogre::SceneNode*			mHeadNode;
 	Ogre::Camera*				mCamera;
 	Ogre::Vector3				mDirection;
 	Ogre::Real					mMove;
 	Ogre::Real					mRotate;
+	Ogre::Camera*				cams[nbEyes];
+	Ogre::Quaternion			initialOculusOrientation;
+	Ogre::Vector3				initialOculusPosition;
 
 	ovrHmd						hmd;
+	//ovrTrackingState			ts;
+	OVR::Quatf					oculusOrient;
+	OVR::Vector3f				oculusPos;
 
 	OIS::InputManager*			mInputManager;
 	OIS::Mouse*					mMouse;
