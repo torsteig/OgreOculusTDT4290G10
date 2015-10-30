@@ -20,6 +20,10 @@
 #include <OVR_CAPI_GL.h>
 #include <OVR_CAPI_0_7_0.h>
 
+//For physics loop
+#include <thread>
+#include "PhysicsLoop.h"
+
 //#include <SdkCameraMan.h>
 
 enum eyes{left, right, nbEyes};

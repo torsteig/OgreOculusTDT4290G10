@@ -151,6 +151,21 @@ int OgreOculus::go(void)
 	Ogre::Entity* groundEntity = smgr->createEntity("ground");
 	smgr->getRootSceneNode()->createChildSceneNode()->attachObject(groundEntity);
 	groundEntity->setMaterialName("Examples/Rockwall");
+
+	//Add some fish
+	for(int i = 0; i < 10; i++){
+		Ogre::Entity* ogreEntity2 = smgr->createEntity("fish.mesh");
+		Ogre::SceneNode* ogreNode2 = smgr->getRootSceneNode()->createChildSceneNode();
+		ogreNode2->setPosition(Ogre::Vector3(0, 50, i*10));
+		ogreNode2->attachObject(ogreEntity2);
+
+		Ogre::AnimationState* mAnimationState = ogreEntity2->getAnimationState("swim");
+		mAnimationState->setLoop(true);
+		mAnimationState->setEnabled(true);
+		Ogre::Degree angle = Ogre::Degree(180); 
+		ogreNode2->roll(angle);
+		ogreNode2->pitch(angle);
+	}
 	/*---------------------------------------------*/
 	/* OGRE MODEL CREATION ENDS HERE                */
 	/*---------------------------------------------*/
@@ -354,6 +369,10 @@ int OgreOculus::go(void)
 	//int mouseYstate = mMouse->getMouseState().Y.rel;
 	*/
 	//static Ogre::Real move = 1;
+
+	//Run physics loop in a new thread
+	std::thread thread(physicsLoop, smgr);
+
 	// Render loop
 	while(render)
 	{
@@ -604,9 +623,10 @@ bool OgreOculus::keyPressed(const OIS::KeyEvent &ke)
 	case OIS::KC_RIGHT:
 		mDirection.x = mMove;
 		break;
+	case OIS::KC_L:
+		break;
 	case OIS::KC_R:
 		//reset camera
-
 		initialOculusOrientation = Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z);
 		initialOculusPosition = Ogre::Vector3(oculusPos.x, oculusPos.y, oculusPos.z);
 		
