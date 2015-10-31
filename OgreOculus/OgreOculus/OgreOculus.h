@@ -37,7 +37,7 @@ public:
 	virtual int go(void);
 
 protected:
-	virtual void createFrameListener(void);
+	virtual void createEventListener(void);
 	virtual void createCamera(void);
 
 	virtual bool keyPressed(const OIS::KeyEvent &ke);
