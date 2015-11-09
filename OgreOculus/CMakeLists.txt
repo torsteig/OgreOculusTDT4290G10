@@ -99,14 +99,12 @@ endif()
 set(HDRS
 	./OgreOculus.h
 	./PhysicsLoop.h
-	./InputManager.h
+	
 )
  
 set(SRCS
 	./OgreOculus.cpp
 	./PhysicsLoop.cpp
-	./InputManager.cpp
-	
 )
  
 include_directories( ${OIS_INCLUDE_DIRS}
