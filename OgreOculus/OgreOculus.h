@@ -60,6 +60,7 @@ protected:
 	Ogre::Camera*				cams[nbEyes];
 	Ogre::Quaternion			initialOculusOrientation;
 	Ogre::Vector3				initialOculusPosition;
+	Ogre::Real					headPositionTrackingSensitivity;
 
 	ovrHmd						hmd;
 	//ovrTrackingState			ts;

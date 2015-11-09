@@ -16,6 +16,7 @@ OgreOculus::OgreOculus(void)
 	mRotate(0.13),
 	initialOculusOrientation(Ogre::Quaternion(1,0,0,0)),
 	initialOculusPosition(Ogre::Vector3(0,0,0)),
+	headPositionTrackingSensitivity(300),
 
 	hmd(0),
 
@@ -266,7 +267,8 @@ int OgreOculus::go(void)
 		mHeadNode->setOrientation(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z) * initialOculusOrientation.Inverse());
 
 		/***** head tracking ****/
-		mHeadNode->setPosition(mPlayerNode->getPosition() * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
+		//mHeadNode->setPosition(mPlayerNode->getPosition() * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
+		mHeadNode->setPosition(headPositionTrackingSensitivity * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
 		//mHeadNode->setPosition(mPlayerNode->getPosition() * (Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition));
 		//mHeadNode->setPosition(Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition);
 		/****** ******/
@@ -305,7 +307,7 @@ void OgreOculus::createCamera(void)
 	mHeadNode = mPlayerNode->createChildSceneNode("HeadNode");
 
 	mHeadNode->attachObject(mCamera);
-	mPlayerNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::SceneNode::TS_WORLD);
+	mPlayerNode->lookAt(Ogre::Vector3(0, 50, 0), Ogre::SceneNode::TS_WORLD);
 	mPlayerNode->setFixedYawAxis(true);
 
 	//OCR cameras
@@ -364,6 +366,7 @@ bool OgreOculus::keyPressed(const OIS::KeyEvent &ke)
 		mDirection.x = mMove;
 		break;
 	case OIS::KC_L:
+		Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(Ogre::Vector3(oculusPos.x, oculusPos.y, oculusPos.z)));
 		break;
 	case OIS::KC_R:
 		//reset camera
@@ -372,8 +375,13 @@ bool OgreOculus::keyPressed(const OIS::KeyEvent &ke)
 		
 		// values should be changed
 		mPlayerNode->setPosition(Ogre::Vector3(0,50,100));
-		mPlayerNode->lookAt(Ogre::Vector3(0, 0, 0), Ogre::SceneNode::TS_WORLD);
+		mPlayerNode->lookAt(Ogre::Vector3(0, 50, 0), Ogre::SceneNode::TS_WORLD);
 		//mHeadNode->setOrientation(mPlayerNode->getOrientation());
+		
+		break;
+	case OIS::KC_LSHIFT:
+		mMove = mMove*2;
+		mDirection = 2*mDirection;
 		
 		break;
 	}
@@ -403,6 +411,10 @@ bool OgreOculus::keyReleased(const OIS::KeyEvent &ke)
 	case OIS::KC_RIGHT:
 		mDirection.x = 0;
 		break;
+
+	case OIS::KC_LSHIFT:
+		mMove = mMove/2.0;
+		mDirection = mDirection /2.0;
 	}
 	return true;
 }
