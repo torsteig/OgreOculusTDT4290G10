@@ -476,7 +476,7 @@ int OgreOculus::go(void)
 		//mHeadNode->setOrientation(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z) * mPlayerNode->getOrientation());
 
 		/***** head tracking ****/
-		mHeadNode->setPosition(mPlayerNode->getPosition() * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
+		mHeadNode->setPosition(mPlayerNode->getPosition() * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z)); // from daniel
 		//mHeadNode->setPosition(mPlayerNode->getPosition() * (Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition));
 		//mHeadNode->setPosition(Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition);
 		/****** ******/
