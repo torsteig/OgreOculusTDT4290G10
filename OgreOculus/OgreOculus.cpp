@@ -15,7 +15,7 @@ OgreOculus::OgreOculus(void)
 	mMove(1),
 	mRotate(0.13),
 	initialOculusOrientation(Ogre::Quaternion(1,0,0,0)),
-	initialOculusPosition(Ogre::Vector3(0,0,0)),
+	//initialOculusPosition(Ogre::Vector3(0,0,0)),
 	headPositionTrackingSensitivity(300),
 
 	hmd(0),
@@ -269,8 +269,7 @@ int OgreOculus::go(void)
 		/***** head tracking ****/
 		//mHeadNode->setPosition(mPlayerNode->getPosition() * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
 		mHeadNode->setPosition(headPositionTrackingSensitivity * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
-		//mHeadNode->setPosition(mPlayerNode->getPosition() * (Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition));
-		//mHeadNode->setPosition(Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition);
+		//mHeadNode->setPosition(headPositionTrackingSensitivity * (Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition));
 		/****** ******/
 
 		root->_fireFrameRenderingQueued();
@@ -371,7 +370,7 @@ bool OgreOculus::keyPressed(const OIS::KeyEvent &ke)
 	case OIS::KC_R:
 		//reset camera
 		initialOculusOrientation = Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z);
-		initialOculusPosition = Ogre::Vector3(oculusPos.x, oculusPos.y, oculusPos.z);
+		//initialOculusPosition = Ogre::Vector3(oculusPos.x, oculusPos.y, oculusPos.z);
 		
 		// values should be changed
 		mPlayerNode->setPosition(Ogre::Vector3(0,50,100));
