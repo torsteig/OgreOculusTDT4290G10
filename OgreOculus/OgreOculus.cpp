@@ -345,6 +345,9 @@ bool OgreOculus::keyPressed(const OIS::KeyEvent &ke)
 {
 	switch (ke.key)
 	{
+	case OIS::KC_ESCAPE:
+		 std::exit(0);
+		break;
 	case OIS::KC_W:
 	case OIS::KC_UP:
 		mDirection.z = -mMove;
