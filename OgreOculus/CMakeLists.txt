@@ -125,7 +125,7 @@ add_executable(OgreOculus WIN32 ${HDRS} ${SRCS})
 set_target_properties(OgreOculus PROPERTIES DEBUG_POSTFIX _d)
 
 set (OCULUS_LIB "$ENV{OCULUS_HOME}/LibOVR/Lib/Windows/Win32/Release/VS2012/LibOVR.lib")
-set (GLEW_LIB "$ENV{GLEW_HOME}/lib/glew32.lib")
+set (GLEW_LIB "$ENV{GLEW_HOME}/lib/Release/Win32/glew32.lib")
 set (OGRE_OPT_LIB "$ENV{OGRE_HOME}/lib/debug/opt/RenderSystem_GL_d.lib")
 target_link_libraries(OgreOculus ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${OCULUS_LIB} ${GLEW_LIB} ${OGRE_OPT_LIB})
  
@@ -181,7 +181,7 @@ if(WIN32)
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_Direct3D9.dll
 		${OGRE_PLUGIN_DIR_REL}/RenderSystem_GL.dll
 		${OGRE_PLUGIN_DIR_REL}/OIS.dll
-		${GLEW_HOME}/bin/glew32.dll
+		${GLEW_HOME}/bin/Release/Win32/glew32.dll
 		DESTINATION bin
 		CONFIGURATIONS Release RelWithDebInfo
 	)
@@ -190,7 +190,7 @@ if(WIN32)
 		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_Direct3D9_d.dll
 		${OGRE_PLUGIN_DIR_DBG}/RenderSystem_GL_d.dll
 		${OGRE_PLUGIN_DIR_DBG}/OIS_d.dll
-		${GLEW_HOME}/bin/glew32.dll
+		${GLEW_HOME}/bin/Release/Win32/glew32.dll
 		DESTINATION bin
 		CONFIGURATIONS Debug
 	)
