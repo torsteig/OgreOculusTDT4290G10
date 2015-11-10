@@ -1,3 +1,2 @@
 #include <Ogre.h>
-
-void physicsLoop(Ogre::SceneManager* smgr);
+void physicsLoop(Ogre::SceneManager* smgr, std::map<std::string, std::string>* message, std::map<Ogre::Entity*, Ogre::Vector3>* positionRequests, std::map<Ogre::Entity*, std::string>* animationRequests, std::map<Ogre::Entity*, std::vector<int>>* rotationRequests);

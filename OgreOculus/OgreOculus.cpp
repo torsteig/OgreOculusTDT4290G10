@@ -132,6 +132,7 @@ int OgreOculus::go(void)
 		ogreNode2->roll(angle);
 		ogreNode2->pitch(angle);
 	}
+
 	/*---------------------------------------------*/
 	/* OGRE MODEL CREATION ENDS HERE                */
 	/*---------------------------------------------*/
@@ -244,11 +245,44 @@ int OgreOculus::go(void)
 	ovrLayerHeader* layers;
 
 	//Run physics loop in a new thread
-	std::thread thread(physicsLoop, smgr);
+	std::map<Ogre::Entity*, Ogre::Vector3> positionRequests;
+	std::map<Ogre::Entity*, std::string> animationRequests;
+	std::map<Ogre::Entity*, std::vector<int>> rotationRequests;
+	std::map<std::string, std::string> message;
+	
+	std::thread physicsThread(physicsLoop, smgr, &message, &positionRequests, &animationRequests, &rotationRequests);
 
 	// Render loop
 	while(render)
 	{
+		// Suspend physics loop and perform requested movement/rotations/animations
+		if(positionRequests.size() > 0 || animationRequests.size() > 0 || rotationRequests.size() > 0){
+			message.insert(std::pair<std::string, std::string>("", ""));
+		
+			for(auto const &request : positionRequests) {
+				Ogre::Vector3 pos = request.second;
+				Ogre::SceneNode* sceneNode = request.first->getParentSceneNode();
+				sceneNode->setPosition(pos);
+			}
+
+			for(auto const &request : animationRequests) {
+				request.first->getAnimationState(request.second)->addTime(0.1);
+			}
+
+			for(auto const &request : rotationRequests) {
+				Ogre::SceneNode* sceneNode = request.first->getParentSceneNode();
+				sceneNode->roll(Ogre::Degree(request.second[0]));
+				sceneNode->pitch(Ogre::Degree(request.second[1]));
+				sceneNode->yaw(Ogre::Degree(request.second[2]));
+			}
+
+			positionRequests.clear();
+			animationRequests.clear();
+			rotationRequests.clear();
+
+			// Resume physics loop
+			message.clear();
+		}
 		Ogre::WindowEventUtilities::messagePump();
 
 		//advance textureset index
@@ -264,6 +298,9 @@ int OgreOculus::go(void)
 		ovr_CalcEyePoses(pose, offset, layer.RenderPose);
 		oculusOrient = pose.Rotation;
 		oculusPos = pose.Translation;
+
+
+		
 		mHeadNode->setOrientation(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z) * initialOculusOrientation.Inverse());
 
 		/***** head tracking ****/
@@ -271,6 +308,7 @@ int OgreOculus::go(void)
 		mHeadNode->setPosition(headPositionTrackingSensitivity * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
 		//mHeadNode->setPosition(headPositionTrackingSensitivity * (Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition));
 		/****** ******/
+		
 
 		root->_fireFrameRenderingQueued();
 		vpts[left]->update();
