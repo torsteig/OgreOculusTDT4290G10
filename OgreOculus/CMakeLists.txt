@@ -25,6 +25,8 @@ if(WIN32)
 	)
 	set (OCULUS_HOME "$ENV{OCULUS_HOME}")
 	set (GLEW_HOME "$ENV{GLEW_HOME}")
+	set (OGRE_HOME "$ENV{OGRE_HOME}")
+	set (BOOST_ROOT "$ENV{OGRE_HOME}/boost/")
 endif(WIN32)
  
 if(UNIX)
@@ -96,6 +98,9 @@ endif()
 #	set(OGRE_LIBRARIES ${OGRE_LIBRARIES} ${Boost_LIBRARIES})
 #endif()
  
+include_directories(${OGRE_HOME}/boost)
+
+
 set(HDRS
 	./OgreOculus.h
 	./PhysicsLoop.h
@@ -123,6 +128,12 @@ set (OCULUS_LIB "$ENV{OCULUS_HOME}/LibOVR/Lib/Windows/Win32/Release/VS2012/LibOV
 set (GLEW_LIB "$ENV{GLEW_HOME}/lib/glew32.lib")
 set (OGRE_OPT_LIB "$ENV{OGRE_HOME}/lib/debug/opt/RenderSystem_GL_d.lib")
 target_link_libraries(OgreOculus ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${OCULUS_LIB} ${GLEW_LIB} ${OGRE_OPT_LIB})
+ 
+set(B1 "$ENV{OGRE_HOME}/boost/lib/libboost_chrono-vc110-mt-gd-1_55.lib")
+set(B2 "$ENV{OGRE_HOME}/boost/lib/libboost_date_time-vc110-mt-gd-1_55.lib")
+set(B3 "$ENV{OGRE_HOME}/boost/lib/libboost_system-vc110-mt-gd-1_55.lib")
+set(B4 "$ENV{OGRE_HOME}/boost/lib/libboost_thread-vc110-mt-gd-1_55.lib")
+target_link_libraries(OgreOculus ${B1} ${B2} ${B3} ${B4})
  
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/bin)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist/media)
@@ -186,14 +197,14 @@ if(WIN32)
  
    # as of sdk 1.7.2 we need to copy the boost dll's as well
    # because they're not linked statically (it worked with 1.7.1 though)
-   install(FILES ${Boost_DATE_TIME_LIBRARY_RELEASE}
-      ${Boost_THREAD_LIBRARY_RELEASE}
+   install(FILES ${OGRE_HOME}/boost/lib/libboost_date_time-vc110-mt-gd-1_55.lib
+      ${OGRE_HOME}/boost/lib/libboost_thread-vc110-mt-gd-1_55.lib
       DESTINATION bin
       CONFIGURATIONS Release RelWithDebInfo
    )
  
-   install(FILES ${Boost_DATE_TIME_LIBRARY_DEBUG}
-      ${Boost_THREAD_LIBRARY_DEBUG}
+   install(FILES ${OGRE_HOME}/boost/lib/libboost_date_time-vc110-mt-gd-1_55.lib
+      ${OGRE_HOME}/boost/lib/libboost_thread-vc110-mt-gd-1_55.lib
       DESTINATION bin
       CONFIGURATIONS Debug
    )
