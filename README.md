@@ -7,10 +7,10 @@ Oculus Rift DK2 support for OGRE 3D. Uses Oculus SDK 0.7.
 * Download the [OGRE 1.9 SDK](http://www.ogre3d.org/download/sdk).
 * Download the [GLEW 1.13.0 SDK](http://sourceforge.net/projects/glew/files/glew/1.13.0/).
 * Create the three environment variables *OGRE_HOME*, *OCULUS_HOME* and *GLEW_HOME* with the path to the respective SDKs.
-* Clone the repository and build the project with CMake.
-* Open the project in your IDE. Build the solutions *ALL_BUILD* and *INSTALL*.
+* Clone the repository and build the solution with CMake.
+* Open the solution in your IDE. Build the projects *ALL_BUILD* and *INSTALL*.
 * The runnable application can now be found in *dist/bin/OgreOculus.exe*.
-* After the initial installation, it is only necessary to build the *OgreOculus* solution.
+* After the initial installation, it is only necessary to build the *OgreOculus* project.
 
 ## Controls
 * Move using <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys.
