@@ -20,14 +20,12 @@
 #include <OVR_CAPI_GL.h>
 #include <OVR_CAPI_0_7_0.h>
 
-//For physics loop
+// For physics loop
 #include <thread>
 #include "PhysicsLoop.h"
 
 // For separate Ogre model creation
 #include "OgreModel.h"
-
-//#include <SdkCameraMan.h>
 
 enum eyes{left, right, nbEyes};
 
@@ -36,12 +34,12 @@ class OgreOculus : public Ogre::WindowEventListener, public OIS::KeyListener, pu
 public:
 	OgreOculus(void);
 	virtual ~OgreOculus(void);
-
 	virtual int go(void);
 
 protected:
 	virtual void createEventListener(void);
 	virtual void createCamera(void);
+	virtual void windowClosed(Ogre::RenderWindow* rw);
 
 	virtual bool keyPressed(const OIS::KeyEvent &ke);
 	virtual bool keyReleased(const OIS::KeyEvent &ke);
@@ -49,8 +47,7 @@ protected:
     virtual bool mousePressed(const OIS::MouseEvent &me, OIS::MouseButtonID id);
     virtual bool mouseReleased(const OIS::MouseEvent &me, OIS::MouseButtonID id);
 
-	virtual void windowClosed(Ogre::RenderWindow* rw);
-
+	// Ogre variables
 	Ogre::Root*					root;
 	Ogre::SceneManager*			smgr;
 	Ogre::RenderWindow*			window;
@@ -62,19 +59,17 @@ protected:
 	Ogre::Real					mRotate;
 	Ogre::Camera*				cams[nbEyes];
 	Ogre::Quaternion			initialOculusOrientation;
-	//Ogre::Vector3				initialOculusPosition;
 	Ogre::Real					headPositionTrackingSensitivity;
 
+	// Oculus variables
 	ovrHmd						hmd;
-	//ovrTrackingState			ts;
 	OVR::Quatf					oculusOrient;
 	OVR::Vector3f				oculusPos;
 
+	// OIS variables
 	OIS::InputManager*			mInputManager;
 	OIS::Mouse*					mMouse;
 	OIS::Keyboard*				mKeyboard;
-
-	//OgreBites::SdkCameraMan*	mCameraMan;
 };
 
 #endif

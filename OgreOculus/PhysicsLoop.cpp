@@ -21,19 +21,23 @@ void loop(Ogre::SceneManager* smgr){
 	int dir = 1;
 	int timeStep = 10;
 	while(true){
+		// If the message array has any elements, the render loop is applying changes from physics loop
+		// If so, abort this timestep
 		if((*::message).size() == 1){
 			continue;
 		}
 		Sleep(timeStep);
 		Ogre::SceneManager::MovableObjectIterator iterator = smgr->getMovableObjectIterator("Entity");
 		while(iterator.hasMoreElements()){
+			// If the message array has any elements, the render loop is applying changes from physics loop
+			// If so, abort this timestep
 			if((*::message).size() == 1){
 				continue;
 			}
 			Ogre::Entity* entity = static_cast<Ogre::Entity*>(iterator.getNext());
 
 			// <>< <>< Make the cute fishy swim <>< <><
-			//This only moves fish
+			// This only moves fish
 			if(entity->hasAnimationState("swim")){
 			
 				Ogre::SceneNode* sceneNode = entity->getParentSceneNode();
@@ -53,7 +57,6 @@ void loop(Ogre::SceneManager* smgr){
 			}
 
 		}
-		//ExitThread(0);
 	}
 }
 

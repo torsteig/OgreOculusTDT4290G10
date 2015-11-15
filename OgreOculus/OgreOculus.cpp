@@ -15,22 +15,17 @@ OgreOculus::OgreOculus(void)
 	mMove(1),
 	mRotate(0.13),
 	initialOculusOrientation(Ogre::Quaternion(1,0,0,0)),
-	//initialOculusPosition(Ogre::Vector3(0,0,0)),
 	headPositionTrackingSensitivity(300),
-
 	hmd(0),
-
 	mInputManager(0),
 	mMouse(0),
 	mKeyboard(0)
-
 {
 
 }
 
 OgreOculus::~OgreOculus(void)
 {
-
 	windowClosed(window);
 	delete root;
 }
@@ -47,7 +42,7 @@ int OgreOculus::go(void)
 	// Initialize Root
 	root->initialise(false);
 
-	// Initialize oculus
+	// Initialize Oculus
 	ovrHmd hmd;
 	ovrHmdDesc hmdDesc;
 	ovrGraphicsLuid luid;
@@ -63,17 +58,17 @@ int OgreOculus::go(void)
 	// Turn off HUD
 	ovr_SetInt(hmd, "PerfHudMode", ovrPerfHud_Off);
 
-	//create a window
+	// Create a window
 	window = root->createRenderWindow("Ogre + Oculus = <3", hmdDesc.Resolution.w/2, hmdDesc.Resolution.h/2, false);
 
-	//Create scene manager and cameras
+	// Create scene manager and cameras
 	smgr = root->createSceneManager(Ogre::ST_GENERIC);
 
 	// Load Ogre resource paths from config file
     Ogre::ConfigFile cf;
     cf.load("resources_d.cfg");
 
-    // Go through all sections & settings in the file
+    // Go through all sections & settings in the file and add resources
     Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();
 
     Ogre::String secName, typeName, archName;
@@ -99,38 +94,38 @@ int OgreOculus::go(void)
 	// Create the model itself via OgreModel.cpp
 	createOgreModel(smgr);
 
-	// Camera part here
+	// Create camera
 	createCamera();
 
-	// Viewport and scene (is this even used?)
+	// Set viewport and background color
 	Ogre::Viewport* vp = window->addViewport(mCamera);
-	vp->setBackgroundColour(Ogre::ColourValue(34, 89, 0)); //yellow
+	vp->setBackgroundColour(Ogre::ColourValue(34, 89, 0)); // Yellow
 
-	// Some other camera stuff. Not sure if needed
+	// Set aspect ratio
 	mCamera->setAspectRatio(
     Ogre::Real(vp->getActualWidth()) /
     Ogre::Real(vp->getActualHeight()));
 
-	//init glew
+	// Initialize glew
 	if(glewInit() != GLEW_OK)
 		exit(-3);
 
-	//get texture sizes
+	// Get texture sizes
 	ovrSizei texSizeL, texSizeR;
 	texSizeL = ovr_GetFovTextureSize(hmd, ovrEye_Left, hmdDesc.DefaultEyeFov[left], 1);
 	texSizeR = ovr_GetFovTextureSize(hmd, ovrEye_Right, hmdDesc.DefaultEyeFov[right], 1);
 
-	//calculate render buffer size
+	// Calculate render buffer size
 	ovrSizei bufferSize;
 	bufferSize.w = texSizeL.w + texSizeR.w;
 	bufferSize.h = max(texSizeL.h, texSizeR.h);
 
-	//create render texture set
+	// Create render texture set
 	ovrSwapTextureSet* textureSet;
 	if(ovr_CreateSwapTextureSetGL(hmd, GL_RGB, bufferSize.w, bufferSize.h, &textureSet) != ovrSuccess)
 		exit(-4);
 
-	//create ogre render texture
+	// Create Ogre render texture
 	Ogre::GLTextureManager* textureManager = static_cast<Ogre::GLTextureManager*>(Ogre::GLTextureManager::getSingletonPtr());
 	Ogre::TexturePtr rtt_texture(textureManager->createManual("RttTex", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 		Ogre::TEX_TYPE_2D, bufferSize.w, bufferSize.h, 0, Ogre::PF_R8G8B8, Ogre::TU_RENDERTARGET));
@@ -138,7 +133,7 @@ int OgreOculus::go(void)
 	Ogre::GLTexture* gltex = static_cast<Ogre::GLTexture*>(Ogre::GLTextureManager::getSingleton().getByName("RttTex").getPointer());
 	GLuint renderTextureID = gltex->getGLID();
 
-	//put camera viewport on the ogre render texture
+	// Put camera viewport on the ogre render texture
 	Ogre::Viewport* vpts[nbEyes];
 	vpts[left]=rttEyes->addViewport(cams[left], 0, 0, 0, 0.5f);
 	vpts[right]=rttEyes->addViewport(cams[right], 1, 0.5f, 0, 0.5f);
@@ -151,21 +146,21 @@ int OgreOculus::go(void)
 	Ogre::TexturePtr mirror_texture(textureManager->createManual("MirrorTex", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
 		Ogre::TEX_TYPE_2D, hmdDesc.Resolution.w, hmdDesc.Resolution.h, 0, Ogre::PF_R8G8B8, Ogre::TU_RENDERTARGET));
 
-	//get GLIDs
+	// Get GLIDs
 	GLuint ogreMirrorTextureID = static_cast<Ogre::GLTexture*>(Ogre::GLTextureManager::getSingleton().getByName("MirrorTex").getPointer())->getGLID();
 	GLuint oculusMirrorTextureID = ((ovrGLTexture*)mirrorTexture)->OGL.TexId;
 
-	//Create EyeRenderDesc
+	// Create EyeRenderDesc
 	ovrEyeRenderDesc EyeRenderDesc[nbEyes];
 	EyeRenderDesc[left] = ovr_GetRenderDesc(hmd, ovrEye_Left, hmdDesc.DefaultEyeFov[left]);
 	EyeRenderDesc[right] = ovr_GetRenderDesc(hmd, ovrEye_Right, hmdDesc.DefaultEyeFov[right]);
 
-	//Get offsets
+	// Get offsets
 	ovrVector3f offset[nbEyes];
 	offset[left]=EyeRenderDesc[left].HmdToEyeViewOffset;
 	offset[right]=EyeRenderDesc[right].HmdToEyeViewOffset;
 
-	//Compositor layer
+	// Compositor layer
 	ovrLayerEyeFov layer;
 	layer.Header.Type = ovrLayerType_EyeFov;
 	layer.Header.Flags = 0;
@@ -176,42 +171,40 @@ int OgreOculus::go(void)
 	layer.Viewport[left] = OVR::Recti(0, 0, bufferSize.w/2, bufferSize.h);
 	layer.Viewport[right] = OVR::Recti(bufferSize.w/2, 0, bufferSize.w/2, bufferSize.h);
 
-	//Get projection matrices
+	// Get projection matrices
 	for(size_t eyeIndex(0); eyeIndex < ovrEye_Count; eyeIndex++)
 	{
-		//Get the projection matrix
+		// Get the projection matrix
 		OVR::Matrix4f proj = ovrMatrix4f_Projection(EyeRenderDesc[eyeIndex].Fov,
 			static_cast<float>(0.01f),
 			4000,
 			true);
 
-		//Convert it to Ogre matrix
+		// Convert it to Ogre matrix
 		Ogre::Matrix4 OgreProj;
 		for(size_t x(0); x < 4; x++)
 			for(size_t y(0); y < 4; y++)
 				OgreProj[x][y] = proj.M[x][y];
 
-		//Set the matrix
+		// Set the matrix
 		cams[eyeIndex]->setCustomProjectionMatrix(true, OgreProj);
 	}
 
-		// Variables for render loop
+	// Variables for render loop
 	bool render(true);
-	createEventListener();
-
-
-
 	ovrFrameTiming hmdFrameTiming;
 	ovrTrackingState ts;
 	OVR::Posef pose;
 	ovrLayerHeader* layers;
+
+	// Create event listener for handling user input
+	createEventListener();
 
 	//Run physics loop in a new thread
 	std::map<Ogre::Entity*, Ogre::Vector3> positionRequests;
 	std::map<Ogre::Entity*, std::string> animationRequests;
 	std::map<Ogre::Entity*, std::vector<int>> rotationRequests;
 	std::map<std::string, std::string> message;
-	
 	std::thread physicsThread(physicsLoop, smgr, &message, &positionRequests, &animationRequests, &rotationRequests);
 
 	// Render loop
@@ -245,60 +238,62 @@ int OgreOculus::go(void)
 			// Resume physics loop
 			message.clear();
 		}
+
+		// Update Ogre window
 		Ogre::WindowEventUtilities::messagePump();
 
-		//advance textureset index
+		// Advance textureset index
 		textureSet->CurrentIndex = (textureSet->CurrentIndex + 1) % textureSet->TextureCount;
 		
+		// Capture user input
 		mKeyboard->capture();
 		mMouse->capture();
-		mPlayerNode->translate(mDirection, Ogre::Node::TS_LOCAL);
 
+		// Movement calculations
+		mPlayerNode->translate(mDirection, Ogre::Node::TS_LOCAL);
 		hmdFrameTiming = ovr_GetFrameTiming(hmd, 0);
 		ts = ovr_GetTrackingState(hmd, hmdFrameTiming.DisplayMidpointSeconds);
 		pose = ts.HeadPose.ThePose;
 		ovr_CalcEyePoses(pose, offset, layer.RenderPose);
 		oculusOrient = pose.Rotation;
 		oculusPos = pose.Translation;
-
-
-		
 		mHeadNode->setOrientation(Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z) * initialOculusOrientation.Inverse());
-
-		/***** head tracking ****/
-		//mHeadNode->setPosition(mPlayerNode->getPosition() * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
-		mHeadNode->setPosition(headPositionTrackingSensitivity * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
-		//mHeadNode->setPosition(headPositionTrackingSensitivity * (Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z) - initialOculusPosition));
-		/****** ******/
 		
-
+		// Apply head tracking
+		mHeadNode->setPosition(headPositionTrackingSensitivity * Ogre::Vector3(oculusPos.x, oculusPos.y,oculusPos.z));
+		
+		// Update Ogre viewports
 		root->_fireFrameRenderingQueued();
 		vpts[left]->update();
 		vpts[right]->update();
 
-		//Copy the rendered image to the Oculus Swap Texture
+		// Copy the rendered image to the Oculus Swap Texture
 		glCopyImageSubData(renderTextureID, GL_TEXTURE_2D, 0, 0, 0, 0,
 		((ovrGLTexture*)(&textureSet->Textures[textureSet->CurrentIndex]))->OGL.TexId, GL_TEXTURE_2D, 0, 0, 0, 0,
 		bufferSize.w,bufferSize.h, 1);
 		layers = &layer.Header;
 
-
+		// Submit new frame to the Oculus and update window
 		ovr_SubmitFrame(hmd, 0, nullptr, &layers, 1);
-
 		window->update();
 
+		// Exit loop when window is closed
 		if(window->isClosed()) render = false;
 	}
 
+	// Shud down Oculus
 	ovr_Destroy(hmd);
 	ovr_Shutdown();
 
+	// Delete Ogre root and return
 	delete root;
 	return EXIT_SUCCESS;
 }
 
+// Function for creating Ogre cameras
 void OgreOculus::createCamera(void)
 {
+	// Create camera and head node
 	mCamera = smgr->createCamera("PlayerCam");
 	mCamera->setNearClipDistance(5);
 
@@ -309,11 +304,11 @@ void OgreOculus::createCamera(void)
 	mPlayerNode->lookAt(Ogre::Vector3(0, 50, 0), Ogre::SceneNode::TS_WORLD);
 	mPlayerNode->setFixedYawAxis(true);
 
-	//OCR cameras
+	// OCR cameras
 	cams[left] = smgr->createCamera("leftcam");
 	cams[right] = smgr->createCamera("rightcam");
 
-	//set cam position
+	// Set cam position
 	Ogre::Real dist = Ogre::Real(0.05);
 	cams[right]->setNearClipDistance(Ogre::Real(0.001));
 	cams[left]->setNearClipDistance(Ogre::Real(0.001));
@@ -323,6 +318,7 @@ void OgreOculus::createCamera(void)
 	mLeftEyeNode->attachObject(cams[left]);
 }
 
+// Event listener for user input
 void OgreOculus::createEventListener(void)
 {
 	Ogre::LogManager::getSingletonPtr()->logMessage("*** Initializing OIS ***");
@@ -336,9 +332,6 @@ void OgreOculus::createEventListener(void)
 
 	mMouse->setEventCallback(this);
 	mKeyboard->setEventCallback(this);
-
-	//
-	//root->addFrameListener(this);
 }
 
 bool OgreOculus::keyPressed(const OIS::KeyEvent &ke)
@@ -367,24 +360,20 @@ bool OgreOculus::keyPressed(const OIS::KeyEvent &ke)
 	case OIS::KC_RIGHT:
 		mDirection.x = mMove;
 		break;
+
 	case OIS::KC_L:
 		Ogre::LogManager::getSingleton().logMessage(Ogre::StringConverter::toString(Ogre::Vector3(oculusPos.x, oculusPos.y, oculusPos.z)));
 		break;
+
 	case OIS::KC_R:
-		//reset camera
 		initialOculusOrientation = Ogre::Quaternion(oculusOrient.w, oculusOrient.x, oculusOrient.y, oculusOrient.z);
-		//initialOculusPosition = Ogre::Vector3(oculusPos.x, oculusPos.y, oculusPos.z);
-		
-		// values should be changed
 		mPlayerNode->setPosition(Ogre::Vector3(0,50,100));
 		mPlayerNode->lookAt(Ogre::Vector3(0, 50, 0), Ogre::SceneNode::TS_WORLD);
-		//mHeadNode->setOrientation(mPlayerNode->getOrientation());
-		
 		break;
+
 	case OIS::KC_LSHIFT:
 		mMove = mMove*2;
 		mDirection = 2*mDirection;
-		
 		break;
 	}
 	return true;
