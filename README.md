@@ -12,6 +12,10 @@ Oculus Rift DK2 support for OGRE 3D. Uses Oculus SDK 0.7.
 * The runnable application can now be found in *dist/bin/OgreOculus.exe*.
 * After the initial installation, it is only necessary to build the *OgreOculus* project.
 
+## Use of project
+* Alter the Ogre model through *OgreModel.cpp*. Make sure to add new resources to *resources.cfg*.
+* Physics are handled by a separate loop in *PhysicsLoop.cpp*. Please consult this file for further instructions.
+
 ## Controls
 * Move using <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys.
 * Rotate body using mouse.
