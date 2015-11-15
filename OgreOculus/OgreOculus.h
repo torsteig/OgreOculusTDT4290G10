@@ -24,6 +24,9 @@
 #include <thread>
 #include "PhysicsLoop.h"
 
+// For separate Ogre model creation
+#include "OgreModel.h"
+
 //#include <SdkCameraMan.h>
 
 enum eyes{left, right, nbEyes};

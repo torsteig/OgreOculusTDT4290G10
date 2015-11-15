@@ -104,12 +104,13 @@ include_directories(${OGRE_HOME}/boost)
 set(HDRS
 	./OgreOculus.h
 	./PhysicsLoop.h
-	
+	./OgreModel.h
 )
  
 set(SRCS
 	./OgreOculus.cpp
 	./PhysicsLoop.cpp
+	./OgreModel.cpp
 )
  
 include_directories( ${OIS_INCLUDE_DIRS}
