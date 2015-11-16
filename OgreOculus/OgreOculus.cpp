@@ -99,7 +99,7 @@ int OgreOculus::go(void)
 
 	// Set viewport and background color
 	Ogre::Viewport* vp = window->addViewport(mCamera);
-	vp->setBackgroundColour(Ogre::ColourValue(34, 89, 0)); // Yellow
+	vp->setBackgroundColour(Ogre::ColourValue(0.3, 0.4, 0.7)); // Yellow
 
 	// Set aspect ratio
 	mCamera->setAspectRatio(

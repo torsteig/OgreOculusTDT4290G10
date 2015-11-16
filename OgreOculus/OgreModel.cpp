@@ -2,9 +2,10 @@
 
 void createOgreModel(Ogre::SceneManager* smgr){
 	smgr->setAmbientLight(Ogre::ColourValue(0.5, 0.5, 0.5));
-	Ogre::Entity* ogreEntity = smgr->createEntity("ogrehead.mesh");
+	Ogre::Entity* ogreEntity = smgr->createEntity("tudorhouse.mesh");
 	Ogre::SceneNode* ogreNode = smgr->getRootSceneNode()->createChildSceneNode();
 	ogreNode->attachObject(ogreEntity);
+	ogreNode->setPosition(Ogre::Vector3(-300, 550, 200));
 
 	Ogre::Plane plane(Ogre::Vector3::UNIT_Y, 0);
 	Ogre::MeshManager::getSingleton().createPlane(
@@ -20,7 +21,7 @@ void createOgreModel(Ogre::SceneManager* smgr){
 	groundEntity->setMaterialName("Examples/Rockwall");
 
 	//Add some fish
-	for(int i = 0; i < 10; i++){
+	for(int i = 0; i < 0; i++){
 		Ogre::Entity* ogreEntity2 = smgr->createEntity("fish.mesh");
 		Ogre::SceneNode* ogreNode2 = smgr->getRootSceneNode()->createChildSceneNode();
 		ogreNode2->setPosition(Ogre::Vector3(0, 50, i*10));
